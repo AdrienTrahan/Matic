@@ -2,7 +2,5 @@
 public
 dist
 certificates
-package.json
-package-lock.json
 .gitignore
 README.md

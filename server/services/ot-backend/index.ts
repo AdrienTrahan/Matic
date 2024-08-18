@@ -1,36 +1,37 @@
+/** @format */
 
 import * as WebSocket from "ws"
 import * as http from "http"
-const ShareDBMongo = require('sharedb-mongo')
-import ShareDB from "sharedb";
-import { Connection } from "sharedb/lib/client";
-import { singleton } from 'tsyringe';
-const  WebSocketJSONStream = require("websocket-json-stream");
+const ShareDBMongo = require("sharedb-mongo")
+import ShareDB from "sharedb"
+import { Connection } from "sharedb/lib/client"
+import { singleton } from "tsyringe"
+const WebSocketJSONStream = require("websocket-json-stream")
 
 @singleton()
-export class OTBackendService{
+export class OTBackendService {
     database: any
-    backend: ShareDB | undefined;
-    webSocketServer: WebSocket.WebSocketServer | undefined;
+    backend: ShareDB | undefined
+    webSocketServer: WebSocket.WebSocketServer | undefined
     connection: Connection | undefined
 
-    constructor(){
-        this.database = ShareDBMongo(process.env.MONGO_CONNECTION_STRING);
+    constructor() {
+        this.database = ShareDBMongo(process.env.MONGO_CONNECTION_STRING)
     }
 
-    launch(server: http.Server){
-        this.webSocketServer = new WebSocket.Server({server: server})
-        this.backend = new ShareDB({db: this.database})
+    launch(server: http.Server) {
+        this.webSocketServer = new WebSocket.Server({ server: server })
+        this.backend = new ShareDB({ db: this.database })
 
-        this.configureMiddlewares();
+        this.configureMiddlewares()
 
-        this.webSocketServer.on('connection', (webSocket) => {
+        this.webSocketServer.on("connection", webSocket => {
             var stream = new WebSocketJSONStream(webSocket)
             this.backend!.listen(stream)
         })
     }
-    
-    configureMiddlewares(){
+
+    configureMiddlewares() {
         if (!this.backend) throw "OTBackend used before service is launched"
 
         this.backend.use("readSnapshots", (context, next) => {
@@ -38,13 +39,13 @@ export class OTBackendService{
         })
     }
 
-    getConnection(){
+    getConnection() {
         if (!this.connection) this.connection = this.backend?.connect()
         if (!this.connection) throw "OTBackend used before service is launched"
         return this.connection
     }
 
-    isBackendContext(context: any){
+    isBackendContext(context: any) {
         return context.agent.clientId == this.connection?.agent?.clientId && this.connection
     }
 }

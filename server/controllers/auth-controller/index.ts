@@ -109,4 +109,5 @@ export class AuthController extends AbstractController{
         res.clearCookie('session', { sameSite, secure: true, httpOnly: true });
         res.clearCookie('refresh', { sameSite, httpOnly: true, secure: true, path: "/api/auth/refresh"})
     }
+    
 }

@@ -5,11 +5,11 @@ import fs from "fs";
 import path from "path";
 
 const sql = postgres({
-    port: parseInt(process.env.DATABASE_PORT ?? "5432"),
-    host: process.env.DATABASE_IP,
-    database: process.env.DATABASE_NAME,
-    username: process.env.DATABASE_USER,
-    password: process.env.DATABASE_PASSWORD
+    port: parseInt(process.env.PG_PORT ?? "5432"),
+    host: process.env.PG_IP,
+    database: process.env.PG_NAME,
+    username: process.env.PG_USER,
+    password: process.env.PG_PASSWORD
 })
 export {sql};
 
@@ -24,20 +24,20 @@ export class DatabaseService{
     }
     private initConnection(){
         return this.hasRequireEnvironnementVariables() ? postgres({
-            port: parseInt(process.env.DATABASE_PORT ?? "5432"),
-            host: process.env.DATABASE_IP,
-            database: process.env.DATABASE_NAME,
-            username: process.env.DATABASE_USER,
-            password: process.env.DATABASE_PASSWORD
+            port: parseInt(process.env.PG_PORT ?? "5432"),
+            host: process.env.PG_IP,
+            database: process.env.PG_NAME,
+            username: process.env.PG_USER,
+            password: process.env.PG_PASSWORD
         }) : undefined;
     }
     private hasRequireEnvironnementVariables(){
         return (
-            process.env.DATABASE_PORT != undefined &&
-            process.env.DATABASE_IP != undefined &&
-            process.env.DATABASE_NAME != undefined &&
-            process.env.DATABASE_USER != undefined &&
-            process.env.DATABASE_PASSWORD != undefined
+            process.env.PG_PORT != undefined &&
+            process.env.PG_IP != undefined &&
+            process.env.PG_NAME != undefined &&
+            process.env.PG_USER != undefined &&
+            process.env.PG_PASSWORD != undefined
         );
     }
 

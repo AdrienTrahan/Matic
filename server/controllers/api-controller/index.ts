@@ -25,3 +25,4 @@ export class ApiController extends AbstractController{
         this.validationController.use(router);
     }
 }
+

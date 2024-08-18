@@ -96,12 +96,6 @@ export class AuthController extends AbstractController{
                 respondWithError(error, res);
             }
         });
-
-        router.get("/test",
-            validate(TokenVerificationRequestSchema),
-            this.authService.verifyToken.bind(this.authService), (req, res) => {
-            res.json({res: "connected!"})
-        })
     }
 
     static setCookies(res: Response, token: any, refresh : any){

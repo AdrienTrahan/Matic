@@ -1,0 +1,2 @@
+INSERT INTO public.tokens(token, user_id, expiry, refresh_token, refresh_expiry)
+VALUES ($1, $2, (SELECT current_timestamp AT TIME ZONE 'UTC' + interval '4 hours' AS timestamptz), $3, (SELECT current_timestamp AT TIME ZONE 'UTC' + interval '1 month' AS timestamptz))

@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM public.users WHERE email=$1 AND recovery_code=$2 AND recovery_expiry > (SELECT current_timestamp AT TIME ZONE 'UTC' AS current_timestamptz)

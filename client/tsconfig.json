@@ -1,0 +1,35 @@
+{
+	"extends": "./.svelte-kit/tsconfig.json",
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"moduleResolution": "bundler",
+		"noImplicitAny": false
+	},
+	"include": [
+		"./.svelte-kit/ambient.d.ts",
+		"./.svelte-kit/non-ambient.d.ts",
+		"./.svelte-kit/./types/**/$types.d.ts",
+		"./.svelte-kit/../vite.config.js",
+		"./.svelte-kit/../vite.config.ts",
+		"./.svelte-kit/../src/**/*.js",
+		"./.svelte-kit/../src/**/*.ts",
+		"./.svelte-kit/../src/**/*.svelte",
+		"./.svelte-kit/../tests/**/*.js",
+		"./.svelte-kit/../tests/**/*.ts",
+		"./.svelte-kit/../tests/**/*.svelte",
+		"../../shared/**/*.js",
+		"../../shared/**/*.ts"
+	]
+	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
+	// except $lib which is handled by https://kit.svelte.dev/docs/configuration#files
+	//
+	// If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes
+	// from the referenced tsconfig.json - TypeScript does not merge them in
+}

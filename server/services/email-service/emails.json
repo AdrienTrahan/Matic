@@ -1,0 +1,6 @@
+{
+    "PASSWORD_RESET": {
+        "title": "Password reset - Matic",
+        "path": "recover_email"
+    }
+}

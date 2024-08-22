@@ -38,6 +38,7 @@ export const SignupQuerySchema = {
         password: Joi.string().regex(PASSWORD_REGEX).min(4).max(24).required(),
     }),
 }
+
 export const JoinQuerySchema = {
     body: Joi.object({
         firstname: Joi.string()

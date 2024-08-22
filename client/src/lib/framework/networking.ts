@@ -5,7 +5,7 @@ import { user } from "./auth"
 
 export async function safeFetch(...args: any[]) {
     if (!args[0].startsWith("http://") || !args[0].startsWith("https://")) args[0] = PUBLIC_API_URL + args[0]
-    return await (fetch as any)(...args)
+    return await (args[2] ?? (fetch as any))(...args)
         .then(data => {
             if (data.ok) {
                 return data

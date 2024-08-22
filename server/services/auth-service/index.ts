@@ -1,22 +1,21 @@
 /** @format */
 
-import { singleton } from "tsyringe"
-import { DatabaseService } from "../database-service"
+import bcrypt from "bcrypt"
 import express from "express"
+import cron from "node-cron"
+import sha256 from "sha256"
+import { singleton } from "tsyringe"
 import {
     EMAIL_ALREADY_IN_USE,
+    INVALID_CREDENTIALS,
     INVALID_RECOVERY_CODE,
     NO_USER_EMAIL,
     NO_USER_FOUND,
-    REQUEST_BADLY_FORMATTED,
-    INVALID_CREDENTIALS,
     UNEXPECTED_ERROR_OCCURED,
     respondWithError,
 } from "../../error"
-import sha256 from "sha256"
-import bcrypt from "bcrypt"
+import { DatabaseService } from "../database-service"
 import { EmailService } from "../email-service"
-import cron from "node-cron"
 
 @singleton()
 export class AuthService {

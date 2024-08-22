@@ -40,7 +40,7 @@ export class Application {
         this.configureMiddlewares()
         this.configureRoutes()
 
-        otBackendService.launch(this.httpServer)
+        otBackendService.launch(this.httpsServer)
     }
 
     start(

@@ -1,7 +1,6 @@
 <!-- @format -->
 <script>
     import { goto } from "$app/navigation"
-
     import { user } from "$framework/auth"
 
     let errorMessage = ""
@@ -14,9 +13,10 @@
         errorMessage = ""
         const [data, error] = await user.login(userData)
         if (error) return (errorMessage = error.reason ?? error)
-        goto("/dashboard")
+        goto("/projects")
     }
 </script>
+
 <h1>Login</h1>
 <a href="/signup">go to signup</a>
 <br />

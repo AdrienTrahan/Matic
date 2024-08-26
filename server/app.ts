@@ -9,7 +9,7 @@ import helmet from "helmet"
 import http from "http"
 import https from "https"
 import { singleton } from "tsyringe"
-import { ApiController } from "./controllers/api-controller"
+import { DynamicController } from "./controllers/dynamic-controller"
 import { StaticController } from "./controllers/static-controller"
 import { OTBackendService } from "./services/ot-backend"
 
@@ -20,8 +20,8 @@ export class Application {
     private httpServer: http.Server
 
     constructor(
-        private readonly otBackendService: OTBackendService,
-        private readonly apiController: ApiController,
+        readonly otBackendService: OTBackendService,
+        private readonly dynamicController: DynamicController,
         private readonly staticController: StaticController
     ) {
         this.app = express()
@@ -72,8 +72,8 @@ export class Application {
         this.app.use(express.urlencoded({ extended: true }))
     }
     private configureRoutes() {
-        this.apiController.use(this.app)
         this.staticController.use(this.app)
+        this.dynamicController.use(this.app)
     }
     getHttpsServer() {
         return this.httpsServer

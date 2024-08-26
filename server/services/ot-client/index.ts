@@ -5,6 +5,12 @@ import { singleton } from "tsyringe"
 import { OTBackendService } from "../ot-backend"
 import { getDefaultProjectStructure } from "./default-structure/project"
 import { getDefaultComponentStructure } from "./default-structure/component"
+import {
+    COMPONENT_COLLECTION,
+    getComponentDocumentId,
+    getProjectDocumentId,
+    PROJECT_COLLECTION,
+} from "../../../shared/sharedb"
 
 @singleton()
 export class OTFrontendService {
@@ -12,22 +18,14 @@ export class OTFrontendService {
 
     getProjectDocument(documentId: string) {
         const connection = this.otBackendService.getConnection()
-        const document = connection.get("PR", documentId)
+        const document = connection.get(PROJECT_COLLECTION, documentId)
         return document
     }
 
     getComponentDocument(documentId: string) {
         const connection = this.otBackendService.getConnection()
-        const document = connection.get("CP", documentId)
+        const document = connection.get(COMPONENT_COLLECTION, documentId)
         return document
-    }
-
-    getProjectDocumentId(projectId: string) {
-        return `PR_${projectId}`
-    }
-
-    getComponentDocumentId(projectId: string, componentId: string) {
-        return `CP_${projectId}-${componentId}`
     }
 
     async updateDocument(doc: Doc) {
@@ -41,7 +39,7 @@ export class OTFrontendService {
     }
 
     async createProject(projectId: string) {
-        const documentId = this.getProjectDocumentId(projectId)
+        const documentId = getProjectDocumentId(projectId)
         // Shouldn't exist anyways & useless check?
         const projectExists = await this.projectExists(documentId)
         if (projectExists[0] || projectExists[1]) return projectExists
@@ -58,7 +56,7 @@ export class OTFrontendService {
     }
 
     async createComponent(projectId: string, componentId: string) {
-        const documentId = this.getComponentDocumentId(projectId, componentId)
+        const documentId = getComponentDocumentId(projectId, componentId)
         const doc = this.getComponentDocument(documentId)!
         await new Promise<any>(resolve =>
             doc.create(getDefaultComponentStructure(documentId), err =>

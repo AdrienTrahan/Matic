@@ -4,8 +4,12 @@ export function getDefaultProjectStructure(projectId: string, componentId: strin
     return {
         id: projectId,
         pages: {
-            "/": 0,
+            "/": {
+                properties: {},
+                slots: {},
+                classId: componentId,
+            },
         },
-        components: [0],
+        library: {},
     }
 }

@@ -8,7 +8,12 @@ import { Router } from "express"
 import { respondWithError } from "../../error"
 import { ProjectService } from "../../services/project-service"
 import { TokenVerificationRequestSchema } from "../../validators/auth"
-import { CreateProjectQuerySchema, GetProjectQuerySchema } from "../../validators/project"
+import {
+    CreateProjectQuerySchema,
+    GetProjectQuerySchema,
+    ListProjectQuerySchema,
+    UpdateNameProjectQuerySchema,
+} from "../../validators/project"
 
 @singleton()
 export class ProjectController extends AbstractController {
@@ -40,8 +45,40 @@ export class ProjectController extends AbstractController {
             async (req, res) => {
                 try {
                     const { userId } = JSON.parse(req.cookies.session)
-                    let projects = await this.projectService.getProjects(userId)
+                    const projectId = req.query.id as string
+                    let project = await this.projectService.getProject(projectId, userId)
+                    res.json(project)
+                } catch (error) {
+                    respondWithError(error, res)
+                }
+            }
+        )
+
+        router.get(
+            "/list",
+            validate(TokenVerificationRequestSchema),
+            this.authService.verifyToken.bind(this.authService),
+            validate(ListProjectQuerySchema),
+            async (req, res) => {
+                try {
+                    const { userId } = JSON.parse(req.cookies.session)
+                    let projects = await this.projectService.listProjects(userId)
                     res.json(projects)
+                } catch (error) {
+                    respondWithError(error, res)
+                }
+            }
+        )
+
+        router.post(
+            "/update-name",
+            validate(TokenVerificationRequestSchema),
+            this.authService.verifyToken.bind(this.authService),
+            validate(UpdateNameProjectQuerySchema),
+            async (req, res) => {
+                try {
+                    await this.projectService.updateName(req.body.name, req.body.id)
+                    res.json({ success: 1 })
                 } catch (error) {
                     respondWithError(error, res)
                 }

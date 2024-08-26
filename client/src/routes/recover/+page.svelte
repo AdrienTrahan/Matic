@@ -17,9 +17,10 @@
         errorMessage = ""
         const [data, error] = await user.resetPassword(userData)
         if (error || !data.success) return (errorMessage = error.reason ?? error ?? UNEXPECTED_ERROR)
-        goto("/dashboard")
+        goto("/projects")
     }
 </script>
+
 <h1>Password reset</h1>
 
 <a href="/login">go to login</a>

@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "tsc-watch --onSuccess \"node ./dist/server/index.js\"",
     "build": "npx tsc",
-    "start": "nodemon ./dist/server/index.js"
+    "start": "nodemon ./dist/server/index.js",
+    "setup": "./server/services/database-service/setup/database_setup.sh",
+    "drop": "./server/services/database-service/setup/database_drop.sh"
   },
   "author": "",
   "license": "ISC",
@@ -46,6 +48,7 @@
     "@types/nodemailer": "^6.4.15",
     "@types/sha256": "^0.2.2",
     "@types/sharedb": "^3.3.12",
-    "@types/ws": "^8.5.12"
+    "@types/ws": "^8.5.12",
+    "vite-plugin-node-polyfills": "^0.22.0"
   }
 }

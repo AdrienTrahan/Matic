@@ -7,4 +7,15 @@ import { nodePolyfills } from "vite-plugin-node-polyfills"
 
 export default defineConfig({
     plugins: [sveltekit(), commonjs(), nodePolyfills()],
+    resolve: {
+        alias: {
+            "@shared": "../shared",
+            "@library": "../library",
+        },
+    },
+    server: {
+        fs: {
+            allow: ["../shared", "../library"],
+        },
+    },
 })

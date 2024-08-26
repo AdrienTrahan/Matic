@@ -3,12 +3,10 @@
 import express from "express"
 import { singleton } from "tsyringe"
 import { AbstractController } from ".."
-import { NextFunction, Router, Response, Request } from "express"
-import { ValidationError, validate } from "express-validation"
 import { OTFrontendService } from "../../services/ot-client"
 import { AuthController } from "../auth-controller"
-import { ValidationController } from "../validation-controller"
 import { ProjectController } from "../project-controller"
+import { ValidationController } from "../validation-controller"
 @singleton()
 export class ApiController extends AbstractController {
     constructor(

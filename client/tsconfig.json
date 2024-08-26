@@ -25,7 +25,9 @@
         "./.svelte-kit/../tests/**/*.ts",
         "./.svelte-kit/../tests/**/*.svelte",
         "../../shared/**/*.js",
-        "../../shared/**/*.ts"
+        "../../shared/**/*.ts",
+        "../../library/**/*.js",
+        "../../library/**/*.ts"
     ]
     // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
     // except $lib which is handled by https://kit.svelte.dev/docs/configuration#files

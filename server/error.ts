@@ -4,7 +4,7 @@ import express from "express"
 
 export const REQUEST_BADLY_FORMATTED = { reason: "Request is badly formatted", id: 1, code: "REQUEST BADLY FORMATTED" }
 export const UNEXPECTED_ERROR_OCCURED = {
-    reason: "An unexpected error occured",
+    reason: "An unexpected error occurred",
     id: 2,
     code: "UNEXPECTED ERROR OCCURED",
 }

@@ -20,7 +20,7 @@
 </script>
 
 <h1>Signup</h1>
-<a href="/signup">go to login</a>
+<a href="/login">go to login</a>
 <br />
 <input type="text" placeholder="first" bind:value={userData.firstname} />
 <br />

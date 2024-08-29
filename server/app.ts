@@ -51,16 +51,6 @@ export class Application {
         this.httpServer.listen(httpPort, () => console.log(`HTTP server running on port ${httpPort}`))
     }
     private configureMiddlewares() {
-        this.app.use(
-            helmet({
-                contentSecurityPolicy: {
-                    directives: {
-                        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-                        "script-src": ["'self'", "'unsafe-inline'"],
-                    },
-                },
-            })
-        )
         this.app.use(cookieParser())
         this.app.use(
             cors({

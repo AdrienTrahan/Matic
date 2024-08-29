@@ -1,0 +1,125 @@
+<!-- @format -->
+<script lang="ts">
+    import { onMount } from "svelte"
+    import ReplProxy from "./ReplProxy"
+
+    import Bundler from "./Bundler"
+    import { writable } from "svelte/store"
+    import type { Writable } from "svelte/store"
+    import type { Bundle, File } from "./types"
+    import type { Handlers } from "./proxy"
+
+    export let packagesUrl = "https://unpkg.com"
+    export let svelteUrl = `${packagesUrl}/svelte`
+
+    export let files: File[] = []
+    export let injectedJS = ""
+    export let injectedCSS = ""
+    export let theme: "light" | "dark" = "light"
+    export let handlers: Handlers = {}
+    export let disabled: boolean = true
+
+    $: disabled = error || pending || pending_imports || !ready || !initialized
+
+    let bundle: Writable<Bundle | null> = writable(null)
+    export let iframes: (HTMLIFrameElement | null)[] = []
+    let proxies: ReplProxy[] = []
+    let ready = false
+    let initialized = false
+    let pending_imports = 0
+    let pending = false
+    let error: any
+
+    let bundler = new Bundler({
+        packages_url: packagesUrl,
+        svelte_url: svelteUrl,
+        onstatus: message => {},
+    })
+
+    $: {
+        ;(async () => {
+            $bundle = await bundler.bundle(files)
+        })()
+    }
+
+    $: {
+        proxies = []
+        for (let i = 0; i < iframes.length; i++) {
+            const iframe = iframes[i]
+            if (!iframe) continue
+            proxies.push(
+                new ReplProxy(iframe, {
+                    on_fetch_progress: progress => {
+                        pending_imports = progress
+                        handlers.on_fetch_progress && handlers.on_fetch_progress(progress)
+                    },
+                    on_error: handlers.on_error,
+                    on_unhandled_rejection: event => {
+                        let error = event.value
+                        if (typeof error === "string") error = { message: error }
+                        error.message = "Uncaught (in promise): " + error.message
+                        handlers.on_unhandled_rejection && handlers.on_unhandled_rejection(event)
+                    },
+                    on_console: handlers.on_console,
+                    on_console_group: handlers.on_console_group,
+                    on_console_group_end: handlers.on_console_group_end,
+                    on_console_group_collapsed: handlers.on_console_group_collapsed,
+                }),
+            )
+
+            iframe.addEventListener("load", () => (ready = true))
+        }
+    }
+
+    $: if (ready) for (let proxy of proxies) proxy?.iframe_command("set_theme", { theme })
+
+    async function apply_bundle($bundle: Bundle) {
+        if (!$bundle || $bundle.error) return
+        try {
+            await Promise.all(
+                proxies.map(proxy => {
+                    return proxy?.eval(`
+                        ${injectedJS}
+
+                        ${styles}
+
+                        const styles = document.querySelectorAll('style[id^=svelte-]');
+
+                        let i = styles.length;
+                        while (i--) styles[i].parentNode.removeChild(styles[i]);
+
+                        if (window.component) {
+                            try {
+                                window.component.$destroy();
+                            } catch (err) {
+                                console.error(err);
+                            }
+                        }
+
+                        document.body.innerHTML = '';
+                        window.location.hash = '';
+                        window._svelteTransitionManager = null;
+
+                        ${$bundle.dom?.code}
+
+                        window.component = new SvelteComponent.default({
+                            target: document.body
+                        });
+                    `)
+                }),
+            )
+            error = null
+        } catch {}
+        initialized = true
+    }
+
+    $: if (ready && $bundle) apply_bundle($bundle)
+
+    $: styles =
+        injectedCSS &&
+        `{
+		const style = document.createElement('style');
+		style.textContent = ${JSON.stringify(injectedCSS)};
+		document.head.appendChild(style);
+	}`
+</script>

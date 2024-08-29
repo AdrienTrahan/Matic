@@ -18,4 +18,7 @@ export default defineConfig({
             allow: ["../shared", "../library"],
         },
     },
+    optimizeDeps: {
+        exclude: ["@rollup/browser"],
+    },
 })

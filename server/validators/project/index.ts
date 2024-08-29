@@ -14,7 +14,7 @@ export const GetProjectQuerySchema = {
         user_id: Joi.string().required(),
     }),
     query: Joi.object({
-        id: Joi.string().min(1),
+        id: Joi.string().min(1).required(),
     }),
 }
 
@@ -29,5 +29,14 @@ export const UpdateNameProjectQuerySchema = {
         user_id: Joi.string().required(),
         id: Joi.string().required().min(1),
         name: Joi.string().regex(PROJECT_NAME_REGEX).required(),
+    }),
+}
+
+export const ProjectPreviewRequestSchema = {
+    params: Joi.object({
+        projectId: Joi.string().min(1).required(),
+    }),
+    body: Joi.object({
+        user_id: Joi.string().required(),
     }),
 }

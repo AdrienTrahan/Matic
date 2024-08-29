@@ -12,15 +12,12 @@ export class ApiController extends AbstractController {
     constructor(
         private readonly otFrontendService: OTFrontendService,
         private readonly authController: AuthController,
-        private readonly projectController: ProjectController,
-        private readonly validationController: ValidationController
+        private readonly projectController: ProjectController
     ) {
         super("/api")
     }
     protected configureRoutes(router: express.Router): void {
         this.authController.use(router)
         this.projectController.use(router)
-        // leave at the bottom
-        this.validationController.use(router)
     }
 }

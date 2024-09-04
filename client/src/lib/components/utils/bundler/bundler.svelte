@@ -1,13 +1,12 @@
 <!-- @format -->
 <script lang="ts">
-    import { onMount } from "svelte"
     import ReplProxy from "./ReplProxy"
 
-    import Bundler from "./Bundler"
-    import { writable } from "svelte/store"
     import type { Writable } from "svelte/store"
-    import type { Bundle, File } from "./types"
+    import { writable } from "svelte/store"
+    import Bundler from "./Bundler"
     import type { Handlers } from "./proxy"
+    import type { Bundle, File } from "./types"
 
     export let packagesUrl = "https://unpkg.com"
     export let svelteUrl = `${packagesUrl}/svelte`

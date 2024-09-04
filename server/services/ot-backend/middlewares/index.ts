@@ -2,8 +2,13 @@
 
 import { singleton } from "tsyringe"
 import ShareDB from "sharedb"
-import { getProjectDocumentId, PROJECT_COLLECTION } from "../../../../shared/sharedb"
-import { UNAUTHORIZED } from "../../../error"
+import {
+    COMPONENT_COLLECTION,
+    getComponentDocumentIdPrefix,
+    getProjectDocumentId,
+    PROJECT_COLLECTION,
+} from "../../../../shared/sharedb"
+import { UNAUTHORIZED, UNEXPECTED_ERROR_OCCURED } from "../../../error"
 
 @singleton()
 export class OTBackendMiddlewares {
@@ -14,11 +19,22 @@ export class OTBackendMiddlewares {
     }
 
     readAuthMiddleware(context: any, next: any) {
-        const { projectId, backend, permissions } = context.agent.custom
-        if (context.collection == PROJECT_COLLECTION) {
-            const projectDocId = getProjectDocumentId(projectId)
-            const projectIdMatches = context.snapshots.every((snapshot: any) => snapshot.id == projectDocId)
-            ;(projectIdMatches && permissions > 0) || backend ? next() : next(UNAUTHORIZED)
+        try {
+            const { projectId, backend, permissions } = context.agent.custom
+
+            if (context.collection == PROJECT_COLLECTION) {
+                const projectDocId = getProjectDocumentId(projectId)
+                const projectIdMatches = context.snapshots.every((snapshot: any) => snapshot.id == projectDocId)
+                ;(projectIdMatches && permissions > 0) || backend ? next() : next(UNAUTHORIZED)
+            } else if (context.collection == COMPONENT_COLLECTION) {
+                const componentDocId = getComponentDocumentIdPrefix(projectId)
+                const componentIdMatches = context.snapshots.every((snapshot: any) =>
+                    (snapshot.id ?? "").startsWith(componentDocId)
+                )
+                ;(componentIdMatches && permissions > 0) || backend ? next() : next(UNAUTHORIZED)
+            }
+        } catch {
+            next(UNEXPECTED_ERROR_OCCURED)
         }
     }
 }

@@ -4,11 +4,14 @@ import { getProjectDocumentId, PROJECT_COLLECTION } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
 import { authFetch, formUrlEncode } from "./networking"
 import { Connector } from "./socket/connection"
+import { get, writable, type Writable } from "svelte/store"
 
 export class Project {
     projectId: string
     connection: Connection | undefined
-    projectDoc: Doc | undefined
+    private projectDoc: Doc | undefined
+
+    projectData: Writable<any> = writable(null)
     private constructor(id: string) {
         this.projectId = id
     }
@@ -22,11 +25,15 @@ export class Project {
     async loadConnection() {
         this.connection = await Connector.get(this.projectId)
         this.projectDoc = this.connection!.get(PROJECT_COLLECTION, getProjectDocumentId(this.projectId))
-        await new Promise<void>((resolve, reject) => this.projectDoc!.fetch(err => (err ? reject(err) : resolve())))
+        await new Promise<void>((resolve, reject) => {
+            this.projectDoc!.on("op", this.updateProjectData.bind(this))
+            this.projectDoc!.subscribe(err => (err ? reject(err) : resolve()))
+        })
+        this.updateProjectData()
     }
 
-    async getPages() {
-        return this.projectDoc!.data.pages
+    updateProjectData() {
+        this.projectData.set(this.projectDoc?.data)
     }
 
     async getGeneralProjectData(fetch?) {
@@ -54,6 +61,16 @@ export class Project {
                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
             },
             body: formUrlEncode({ name, id }),
+        })
+    }
+
+    async createComponent(name: string) {
+        return await authFetch("/project/create-component", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            },
+            body: formUrlEncode({ name, projectId: this.projectId }),
         })
     }
 }

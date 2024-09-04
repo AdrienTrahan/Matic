@@ -2,6 +2,7 @@
 
 import { redirect } from "@sveltejs/kit"
 import { Project } from "$framework/project"
+import { get } from "svelte/store"
 
 export async function load({ url, fetch }) {
     const params = new URLSearchParams(url.searchParams)
@@ -10,11 +11,9 @@ export async function load({ url, fetch }) {
     const project = await Project.init(id)
     const [projectData, error] = await project.getGeneralProjectData(fetch)
     if (error) throw redirect(307, "/projects")
-    const pages = await project.getPages()
     return {
         projectId: id,
         project,
-        pages,
         projectData,
     }
 }

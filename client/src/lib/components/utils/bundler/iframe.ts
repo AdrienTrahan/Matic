@@ -4,7 +4,6 @@ import { extractNonce } from "./nonce"
 
 const srcdoc: string = `<!DOCTYPE html>
 		<html>
-		
 		<head>
 			<script nonce="${extractNonce()}">
 				(function () {

@@ -9,6 +9,7 @@ import { respondWithError } from "../../error"
 import { ProjectService } from "../../services/project-service"
 import { TokenVerificationRequestSchema } from "../../validators/auth"
 import {
+    CreateComponentProjectQuerySchema,
     CreateProjectQuerySchema,
     GetProjectQuerySchema,
     ListProjectQuerySchema,
@@ -78,6 +79,21 @@ export class ProjectController extends AbstractController {
             async (req, res) => {
                 try {
                     await this.projectService.updateName(req.body.name, req.body.id)
+                    res.json({ success: 1 })
+                } catch (error) {
+                    respondWithError(error, res)
+                }
+            }
+        )
+
+        router.post(
+            "/create-component",
+            validate(TokenVerificationRequestSchema),
+            this.authService.verifyToken.bind(this.authService),
+            validate(CreateComponentProjectQuerySchema),
+            async (req, res) => {
+                try {
+                    this.projectService.createComponent(req.body.name, req.body.projectId)
                     res.json({ success: 1 })
                 } catch (error) {
                     respondWithError(error, res)

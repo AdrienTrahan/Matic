@@ -49,4 +49,12 @@ export class ProjectService {
             throw UNEXPECTED_ERROR_OCCURED
         })
     }
+
+    async createComponent(name: string, projectId: string) {
+        const [componentDocId, err] = await this.otFrontendService.createComponent(projectId)
+        if (err) throw UNEXPECTED_ERROR_OCCURED
+
+        const [_, err2] = await this.otFrontendService.addComponentToProject(componentDocId, projectId, name)
+        return err2 ? [null, err2] : [componentDocId, null]
+    }
 }

@@ -28,7 +28,7 @@
 <br />
 <input type="text" placeholder="email" bind:value={userData.email} />
 <br />
-<input type="text" placeholder="password" bind:value={userData.password} />
+<input type="password" placeholder="password" bind:value={userData.password} />
 <br />
 <p>{errorMessage}</p>
 <button on:click={signup}> Signup </button>

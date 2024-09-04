@@ -1,7 +1,7 @@
 /** @format */
 
 import { Joi } from "express-validation"
-import { PROJECT_NAME_REGEX } from "../../../shared/validation"
+import { COMPONENT_NAME_REGEX, PROJECT_NAME_REGEX } from "../../../shared/validation"
 
 export const CreateProjectQuerySchema = {
     body: Joi.object({
@@ -38,5 +38,13 @@ export const ProjectPreviewRequestSchema = {
     }),
     body: Joi.object({
         user_id: Joi.string().required(),
+    }),
+}
+
+export const CreateComponentProjectQuerySchema = {
+    body: Joi.object({
+        user_id: Joi.string().required(),
+        projectId: Joi.string().min(1).required(),
+        name: Joi.string().regex(COMPONENT_NAME_REGEX).required(),
     }),
 }

@@ -1,16 +1,17 @@
 /** @format */
 
-import ShareDB, { Doc } from "sharedb/lib/client"
+import { Doc } from "sharedb/lib/client"
 import { singleton } from "tsyringe"
-import { OTBackendService } from "../ot-backend"
-import { getDefaultProjectStructure } from "./default-structure/project"
-import { getDefaultComponentStructure } from "./default-structure/component"
 import {
     COMPONENT_COLLECTION,
     getComponentDocumentId,
     getProjectDocumentId,
     PROJECT_COLLECTION,
 } from "../../../shared/sharedb"
+import { UNEXPECTED_ERROR_OCCURED } from "../../error"
+import { OTBackendService } from "../ot-backend"
+import { getDefaultComponentStructure } from "./default-structure/component"
+import { getDefaultProjectStructure } from "./default-structure/project"
 
 @singleton()
 export class OTFrontendService {
@@ -46,8 +47,8 @@ export class OTFrontendService {
 
         const doc = this.getProjectDocument(documentId)!
 
-        const componentId = await this.createComponent(documentId, "0")
-
+        const [componentId, err] = await this.createComponent(projectId, "0")
+        if (err) throw UNEXPECTED_ERROR_OCCURED
         return await new Promise<any>(resolve =>
             doc.create(getDefaultProjectStructure(projectId, componentId), err =>
                 err ? resolve([null, err]) : resolve([null, null])
@@ -55,14 +56,36 @@ export class OTFrontendService {
         )
     }
 
-    async createComponent(projectId: string, componentId: string) {
-        const documentId = getComponentDocumentId(projectId, componentId)
-        const doc = this.getComponentDocument(documentId)!
-        await new Promise<any>(resolve =>
-            doc.create(getDefaultComponentStructure(documentId), err =>
-                err ? resolve([null, err]) : resolve([null, null])
+    async createComponent(projectId: string, componentId?: string) {
+        if (componentId === undefined) {
+            const projectDocId = getProjectDocumentId(projectId)
+            const projDoc = this.getProjectDocument(projectDocId)
+
+            const [_, err] = await this.updateDocument(projDoc)
+            if (err || !projDoc?.data) return [null, err]
+            componentId = `${Object.values(projDoc.data.library).length + Object.values(projDoc.data.pages).length}`
+        }
+
+        const componentDocId = getComponentDocumentId(projectId, componentId)
+        const componentDoc = this.getComponentDocument(componentDocId)!
+
+        return await new Promise<any>(resolve =>
+            componentDoc.create(getDefaultComponentStructure(componentDocId), err =>
+                err ? resolve([null, err]) : resolve([componentDocId, null])
             )
         )
-        return documentId
+    }
+
+    async addComponentToProject(componentDocId: string, projectId: string, name: string): Promise<any[]> {
+        const projectDocId = getProjectDocumentId(projectId)
+        const projDoc = this.getProjectDocument(projectDocId)
+        const [_, err] = await this.updateDocument(projDoc)
+        if (err || !projDoc?.data) return [null, err]
+
+        return await new Promise(resolve => {
+            projDoc.submitOp({ p: ["library", componentDocId], oi: name }, {}, error =>
+                resolve(error ? [null, error] : [null, null])
+            )
+        })
     }
 }

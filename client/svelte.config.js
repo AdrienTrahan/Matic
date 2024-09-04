@@ -2,7 +2,6 @@ import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 /** @type {import('@sveltejs/kit').Config} */
 
-
 const config = {
 	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	// for more information about preprocessors
@@ -21,7 +20,7 @@ const config = {
 			$shared: "../shared",
 			$framework: "src/lib/framework"
 		},
-		csp: {
+		csp: process.env.NODE_ENV == "development" ? undefined : {
 			mode: "hash",
 			directives: {
 				'script-src': ['self', 'unsafe-eval', 'nonce-{%NONCE%}'],

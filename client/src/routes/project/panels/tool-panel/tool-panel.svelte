@@ -8,7 +8,7 @@
     <Card.Content class="w-full flex justify-between items-center p-0">
         <div></div>
         <div>
-            <h2 class="text-sm select-none">
+            <h2 class="text-sm select-none" draggable="false">
                 {projectName ?? ""}
             </h2>
         </div>

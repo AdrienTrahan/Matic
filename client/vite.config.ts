@@ -10,12 +10,11 @@ export default defineConfig({
     resolve: {
         alias: {
             "@shared": "../shared",
-            "@library": "../library",
         },
     },
     server: {
         fs: {
-            allow: ["../shared", "../library"],
+            allow: ["../shared"],
         },
     },
     optimizeDeps: {

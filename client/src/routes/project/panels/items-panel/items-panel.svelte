@@ -1,15 +1,23 @@
 <!-- @format -->
 
 <script lang="ts">
-    import type { Component } from "$framework/component"
+    import type { Component, ParentComponent } from "$framework/component"
     import * as Card from "$lib/components/ui/card"
     import * as Tabs from "$lib/components/ui/tabs"
+    import { getContext } from "svelte"
     import ComponentSection from "./component-section.svelte"
     import PageSection from "./page-section.svelte"
+    import { LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import type { Project } from "$framework/project"
+    import type { ComponentLoader } from "$framework/loader"
+
     let selectedSection = "page"
-    export let project: any
-    export let current: Component | undefined
-    const { projectData } = project.project
+
+    const project: Project = getContext(PROJECT_CONTEXT_KEY)
+    const loader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
+
+    const current: ParentComponent | undefined = loader.main
+    const { data: projectData } = project
 
     $: currentPage = Object.values($projectData.pages).some(page => current && page == current?.id)
         ? current
@@ -29,8 +37,8 @@
         </Tabs.Root>
     </Card.Content>
     {#if selectedSection == "page"}
-        <PageSection on:switchSelection current={currentPage} {project} />
+        <PageSection on:switchSelection current={currentPage} />
     {:else if selectedSection == "component"}
-        <ComponentSection on:switchSelection current={currentComponent} {project} />
+        <ComponentSection on:switchSelection current={currentComponent} />
     {/if}
 </Card.Root>

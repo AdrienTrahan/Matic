@@ -1,13 +1,15 @@
 <!-- @format -->
 <script lang="ts">
     import type { Component } from "$framework/component"
+    import type { Project } from "$framework/project"
     import { Button } from "$lib/components/ui/button"
-    import { createEventDispatcher } from "svelte"
+    import { PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import { createEventDispatcher, getContext } from "svelte"
     const dispatch = createEventDispatcher()
 
-    export let project
+    const project: Project = getContext(PROJECT_CONTEXT_KEY)
     export let current: Component | undefined
-    const { projectData } = project.project
+    const { data: projectData } = project
 
     function selectPageWithId(id: string) {
         dispatch("switchSelection", { id })

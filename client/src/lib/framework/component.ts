@@ -1,46 +1,35 @@
 /** @format */
 
 import { type File } from "$lib/components/utils/bundler"
-import {
-    compileComponentList2SvelteList,
-    compileSvelteImports,
-    COMPONENT_COLLECTION,
-    ComponentTypes,
-    findSvelteImports,
-    flattenHMTL,
-    isComponentInHouseFromId,
-} from "$shared/sharedb"
-import type { Connection, Doc } from "sharedb/lib/client"
-import { get, writable, type Writable } from "svelte/store"
-import { Connector } from "./socket/connection"
 import { Packages } from "$shared/packages"
+import { COMPONENT_COLLECTION, ComponentTypes, isComponentInHouseFromId } from "$shared/sharedb"
+import type { Connection, Doc } from "sharedb/lib/client"
+import { TreeCodeLoader, type CodeLoader, type ComponentLoader } from "./loader"
+
 export class Component {
-    projectId: string
+    componentLoader: ComponentLoader
+
     id: string
     connection: Connection | undefined
     doc: Doc | undefined
-    loaded: boolean = false
-
-    imports: Writable<string[]> = writable([])
-    htmlComponents: Writable<any[]> = writable([])
-    code: Writable<string> = writable(``)
 
     importedComponents: Component[] = []
     componentType: ComponentTypes = ComponentTypes.TREE
+
+    codeLoader: CodeLoader | undefined
 
     get documentData() {
         return isComponentInHouseFromId(this.id) ? Packages[this.id] : this.doc?.data
     }
 
-    protected constructor(id: string, projectId: string) {
-        this.projectId = projectId
+    protected constructor(id: string, componentLoader: ComponentLoader) {
+        this.componentLoader = componentLoader
         this.id = id
-        this.imports.subscribe(this.updateCode.bind(this))
-        this.htmlComponents.subscribe(this.updateCode.bind(this))
     }
 
-    static async init(id: string, projectId: string, connection: Connection) {
-        let component = new Component(id, projectId)
+    static async init(id: string, loader: ComponentLoader, connection: Connection) {
+        let component = new Component(id, loader)
+        component = loader.loadComponent(component)
         return await component.from(connection)
     }
 
@@ -53,12 +42,14 @@ export class Component {
             await this.loadDocument()
             this.componentType = this.doc?.data.type ?? ComponentTypes.FILE
         }
+
         if (this.componentType == ComponentTypes.TREE) {
-            this.loadImports()
-            await this.generateSvelteDOM()
+            this.codeLoader = new TreeCodeLoader(this)
         } else {
+            // this.fetchComponentFile()
         }
-        this.loaded = true
+
+        await this.codeLoader!.load()
         return this
     }
 
@@ -66,37 +57,16 @@ export class Component {
         this.doc = this.connection!.get(COMPONENT_COLLECTION, this.id)
         await new Promise<void>((resolve, reject) => this.doc!.fetch(err => (err ? reject(err) : resolve())))
     }
-
-    loadImports() {
-        this.imports.set(Array.from(findSvelteImports(this.doc!.data.tree)))
-    }
-
-    async generateSvelteDOM() {
-        this.htmlComponents.set(compileComponentList2SvelteList(this.doc?.data.tree))
-    }
-
-    updateCode() {
-        if (this.componentType == ComponentTypes.FILE) return
-        this.code.set(
-            `<script>${compileSvelteImports(get(this.imports))}</script>${flattenHMTL(get(this.htmlComponents))}`
-        )
-    }
 }
 
 export class ParentComponent extends Component {
     bundle: Array<File> | null = null
 
-    static async init(id: string, projectId: string): Promise<ParentComponent> {
-        const connection = await ParentComponent.loadConnection(projectId)
-        const component = await new ParentComponent(id, projectId).from(connection)
-
+    static async init(id: string, loader: ComponentLoader, connection: Connection): Promise<ParentComponent> {
+        const component = await new ParentComponent(id, loader).from(connection)
         component.bundleCode()
-
+        loader.registerComponent(component)
         return component
-    }
-
-    static async loadConnection(projectId: string) {
-        return await Connector.get(projectId)
     }
 
     bundleCode() {
@@ -104,7 +74,7 @@ export class ParentComponent extends Component {
             return {
                 name: index == 0 ? "App" : component.id,
                 type: "svelte",
-                source: get(component.code),
+                source: component.codeLoader!.getCode(),
             }
         })
         this.bundle = files

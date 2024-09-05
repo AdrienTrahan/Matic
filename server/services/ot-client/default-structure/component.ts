@@ -10,7 +10,7 @@ export function getDefaultComponentStructure(componentId: string) {
         tree: [
             [
                 {
-                    id: "PR-0",
+                    id: "IH_0",
                     inhouse: true,
                     children: [],
                 },

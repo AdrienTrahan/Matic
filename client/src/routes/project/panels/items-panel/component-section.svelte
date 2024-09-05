@@ -1,17 +1,19 @@
 <!-- @format -->
 <script lang="ts">
     import type { Component } from "$framework/component"
+    import type { Project } from "$framework/project"
     import Button from "$lib/components/ui/button/button.svelte"
     import * as Dialog from "$lib/components/ui/dialog"
     import { Input } from "$lib/components/ui/input"
     import { Label } from "$lib/components/ui/label"
+    import { PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { COMPONENT_NAME_REGEX } from "$shared/validation"
-    import { createEventDispatcher } from "svelte"
+    import { createEventDispatcher, getContext } from "svelte"
     const dispatch = createEventDispatcher()
 
-    export let project
+    const project: Project = getContext(PROJECT_CONTEXT_KEY)
     export let current: Component | undefined
-    const { projectData } = project.project
+    const { data: projectData } = project
 
     let newComponentName: string = ""
 
@@ -26,7 +28,7 @@
 
     async function createNewComponent() {
         newComponentErrorMessage = ""
-        let [result, error] = await project.project.createComponent(newComponentName)
+        let [result, error] = await project.createComponent(newComponentName)
         if (error || !result) return (newComponentErrorMessage = error.reason ?? error)
 
         newComponentName = ""

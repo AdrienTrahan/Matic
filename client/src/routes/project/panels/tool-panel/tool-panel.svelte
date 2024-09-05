@@ -1,7 +1,10 @@
 <!-- @format -->
 <script lang="ts">
+    import type { Project } from "$framework/project"
     import * as Card from "$lib/components/ui/card"
-    export let projectName: string
+    import { PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import { getContext } from "svelte"
+    export const project: Project = getContext(PROJECT_CONTEXT_KEY)
 </script>
 
 <Card.Root class="h-10 w-full flex items-center">
@@ -9,7 +12,7 @@
         <div></div>
         <div>
             <h2 class="text-sm select-none" draggable="false">
-                {projectName ?? ""}
+                {project.name ?? ""}
             </h2>
         </div>
         <div></div>

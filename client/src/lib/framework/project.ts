@@ -2,18 +2,20 @@
 
 import { getProjectDocumentId, PROJECT_COLLECTION } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
+import { writable, type Writable } from "svelte/store"
 import { authFetch, formUrlEncode } from "./networking"
 import { Connector } from "./socket/connection"
-import { get, writable, type Writable } from "svelte/store"
 
 export class Project {
-    projectId: string
+    id: string
     connection: Connection | undefined
-    private projectDoc: Doc | undefined
+    private doc: Doc | undefined
 
-    projectData: Writable<any> = writable(null)
+    data: Writable<any> = writable(null)
+    name: string = ""
+
     private constructor(id: string) {
-        this.projectId = id
+        this.id = id
     }
 
     static async init(id: string) {
@@ -23,21 +25,23 @@ export class Project {
     }
 
     async loadConnection() {
-        this.connection = await Connector.get(this.projectId)
-        this.projectDoc = this.connection!.get(PROJECT_COLLECTION, getProjectDocumentId(this.projectId))
+        this.connection = await Connector.get(this.id)
+        this.doc = this.connection!.get(PROJECT_COLLECTION, getProjectDocumentId(this.id))
         await new Promise<void>((resolve, reject) => {
-            this.projectDoc!.on("op", this.updateProjectData.bind(this))
-            this.projectDoc!.subscribe(err => (err ? reject(err) : resolve()))
+            this.doc!.on("op", this.updateProjectData.bind(this))
+            this.doc!.subscribe(err => (err ? reject(err) : resolve()))
         })
         this.updateProjectData()
     }
 
     updateProjectData() {
-        this.projectData.set(this.projectDoc?.data)
+        this.data.set(this.doc?.data)
     }
 
-    async getGeneralProjectData(fetch?) {
-        return await authFetch(`/project/get?id=${this.projectId}`, {}, fetch)
+    async loadGeneralProjectData(fetch?) {
+        const [value, error] = await authFetch(`/project/get?id=${this.id}`, {}, fetch)
+        if (!error && value) this.name = value.project_name
+        return [value, error]
     }
 
     static async createProject() {
@@ -70,7 +74,7 @@ export class Project {
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
             },
-            body: formUrlEncode({ name, projectId: this.projectId }),
+            body: formUrlEncode({ name, projectId: this.id }),
         })
     }
 }

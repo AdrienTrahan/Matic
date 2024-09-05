@@ -27,16 +27,24 @@ export enum ComponentTypes {
     FILE = "PATH",
 }
 
+export function createSvelteFile(imports: string, code: string) {
+    return `<script>${imports}</script>${code}`
+}
+
+export function renameComponentId(id: string) {
+    return (id ?? "").replace(/[\W]+/, "_")
+}
+
 export function generateSvelteComponentOpening(id: string) {
-    return `<${id}>`
+    return `<${renameComponentId(id)}>`
 }
 
 export function generateSvelteComponentClosing(id: string) {
-    return `</${id}>`
+    return `</${renameComponentId(id)}>`
 }
 
-export function generateSvelteFragmentSlotOpening(id: number) {
-    return `<svelte:fragment slot="${id}">`
+export function generateSvelteFragmentSlotOpening(index: number) {
+    return `<svelte:fragment slot="${index}">`
 }
 
 export function generateSvelteFragmentSlotClosing() {
@@ -54,7 +62,9 @@ export function findSvelteImports(slots: any[], imports = new Set<string>()): Se
 }
 
 export function compileSvelteImports(imports: string[]): string {
-    return imports.map(component => `import ${component} from "./${component}.svelte";`).join("\n")
+    return imports
+        .map(component => `import ${renameComponentId(component)} from "./${renameComponentId(component)}.svelte";`)
+        .join("\n")
 }
 
 export function compileComponentList2SvelteList(slots: any[]): any {

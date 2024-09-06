@@ -4,7 +4,8 @@ import { type File } from "$lib/components/utils/bundler"
 import { Packages } from "$shared/packages"
 import { COMPONENT_COLLECTION, ComponentTypes, isComponentInHouseFromId } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
-import { TreeCodeLoader, type CodeLoader, type ComponentLoader } from "./loader"
+import { writable, type Writable } from "svelte/store"
+import { FileCodeLoader, TreeCodeLoader, type CodeLoader, type ComponentLoader } from "./loader"
 
 export class Component {
     componentLoader: ComponentLoader
@@ -13,7 +14,6 @@ export class Component {
     connection: Connection | undefined
     doc: Doc | undefined
 
-    importedComponents: Component[] = []
     componentType: ComponentTypes = ComponentTypes.TREE
 
     codeLoader: CodeLoader | undefined
@@ -42,11 +42,15 @@ export class Component {
             await this.loadDocument()
             this.componentType = this.doc?.data.type ?? ComponentTypes.FILE
         }
-
-        if (this.componentType == ComponentTypes.TREE) {
-            this.codeLoader = new TreeCodeLoader(this)
-        } else {
-            // this.fetchComponentFile()
+        switch (this.componentType) {
+            case ComponentTypes.TREE:
+                this.codeLoader = new TreeCodeLoader(this)
+                break
+            case ComponentTypes.FILE:
+                this.codeLoader = new FileCodeLoader(this)
+                break
+            default:
+                throw "Invalid component type"
         }
 
         await this.codeLoader!.load()
@@ -60,23 +64,30 @@ export class Component {
 }
 
 export class ParentComponent extends Component {
-    bundle: Array<File> | null = null
+    bundle: Writable<Array<File> | null> = writable(null)
 
     static async init(id: string, loader: ComponentLoader, connection: Connection): Promise<ParentComponent> {
+        loader.clearLoadedComponents()
+
         const component = await new ParentComponent(id, loader).from(connection)
-        component.bundleCode()
+
         loader.registerComponent(component)
+
+        component.bundleCode()
         return component
     }
 
     bundleCode() {
-        let files = [this, ...this.importedComponents].map((component: Component, index: number): File => {
-            return {
-                name: index == 0 ? "App" : component.id,
-                type: "svelte",
-                source: component.codeLoader!.getCode(),
+        let files = [this, ...Object.values(this.componentLoader.loadedComponents)].map(
+            (component: Component, index: number): File => {
+                return {
+                    name: index == 0 ? "App" : component.id,
+                    type: "svelte",
+                    source: component.codeLoader!.getCode(),
+                }
             }
-        })
-        this.bundle = files
+        )
+
+        this.bundle.set(files)
     }
 }

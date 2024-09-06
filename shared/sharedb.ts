@@ -24,7 +24,7 @@ export const DEFAULT_COMPONENT_NAME = "Component"
 
 export enum ComponentTypes {
     TREE = "tree",
-    FILE = "PATH",
+    FILE = "file",
 }
 
 export function createSvelteFile(imports: string, code: string) {

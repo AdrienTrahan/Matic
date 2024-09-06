@@ -11,7 +11,7 @@
     <Card.Content class="w-full flex justify-between items-center p-0">
         <div></div>
         <div>
-            <h2 class="text-sm select-none" draggable="false">
+            <h2 class="text-sm select-none font-semibold capitalize" draggable="false">
                 {project.name ?? ""}
             </h2>
         </div>

@@ -4,16 +4,15 @@ import { PUBLIC_API_URL } from "$env/static/public"
 import { user } from "./auth"
 
 export async function safeFetch(...args: any[]) {
-    if (!args[0].startsWith("http://") || !args[0].startsWith("https://")) args[0] = PUBLIC_API_URL + args[0]
+    if (!args[0].startsWith("http://") && !args[0].startsWith("https://")) args[0] = PUBLIC_API_URL + args[0]
     return await (args[2] ?? (fetch as any))(...args)
-        .then(data => {
+        .then(async data => {
+            const contentType = data.headers.get("Content-Type")
+            const isJSON = contentType && contentType.includes("application/json")
             if (data.ok) {
-                return data
-                    .json()
-                    .then(data => [data, null])
-                    .catch(error => [null, error])
+                return (isJSON ? data.json() : data.text()).then(data => [data, null]).catch(error => [null, error])
             } else {
-                return data
+                return (isJSON ? data.json() : data.text())
                     .json()
                     .then(data => [null, data])
                     .catch(error => [null, error])

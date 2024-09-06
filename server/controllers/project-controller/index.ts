@@ -5,7 +5,7 @@ import { AbstractController } from ".."
 import { AuthService } from "../../services/auth-service"
 import { validate } from "express-validation"
 import { Router } from "express"
-import { respondWithError } from "../../error"
+import { respondWithError, UNEXPECTED_ERROR_OCCURED } from "../../error"
 import { ProjectService } from "../../services/project-service"
 import { TokenVerificationRequestSchema } from "../../validators/auth"
 import {
@@ -93,8 +93,9 @@ export class ProjectController extends AbstractController {
             validate(CreateComponentProjectQuerySchema),
             async (req, res) => {
                 try {
-                    this.projectService.createComponent(req.body.name, req.body.projectId)
-                    res.json({ success: 1 })
+                    const [id, error] = await this.projectService.createComponent(req.body.name, req.body.projectId)
+                    if (error) throw UNEXPECTED_ERROR_OCCURED
+                    res.json({ id })
                 } catch (error) {
                     respondWithError(error, res)
                 }

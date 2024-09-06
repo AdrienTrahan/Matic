@@ -1,7 +1,9 @@
 <!-- @format -->
 <script lang="ts">
     import { ParentComponent } from "$framework/component"
+    import type { ComponentLoader } from "$framework/loader"
     import type { Project } from "$framework/project"
+    import { Connector } from "$framework/socket/connection"
     import { LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { setContext } from "svelte"
     import ComponentPreview from "./component-preview.svelte"
@@ -9,8 +11,6 @@
     import PropertiesPanel from "./panels/properties-panel/properties-panel.svelte"
     import ToolPanel from "./panels/tool-panel/tool-panel.svelte"
     import PanningWindow from "./panning-window.svelte"
-    import type { ComponentLoader } from "$framework/loader"
-    import { Connector } from "$framework/socket/connection"
 
     export let data: {
         project: Project
@@ -35,7 +35,6 @@
         loadComponent(id)
     }
 </script>
-@format
 
 <div class="fixed inset-0 flex justify-center">
     <div class="absolute inset-0 z-0 bg-zinc-100">

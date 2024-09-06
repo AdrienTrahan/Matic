@@ -6,16 +6,20 @@ import {
     createSvelteFile,
     findSvelteImports,
     flattenHMTL,
+    isComponentInHouseFromId,
 } from "$shared/sharedb"
 import { get, writable, type Writable } from "svelte/store"
 import { Component, type ParentComponent } from "./component"
+import { Packages } from "$shared/packages"
+import { PUBLIC_LIB_URL, PUBLIC_MARKETPLACE_URL } from "$env/static/public"
+import { safeFetch } from "./networking"
 
 export class ComponentLoader {
     loadedComponents: { [key: string]: Component } = {}
-    main: ParentComponent | undefined
+    main: Writable<ParentComponent | undefined> = writable()
 
     registerComponent(component: ParentComponent) {
-        this.main = component
+        this.main.set(component)
     }
 
     loadComponent(component: Component) {
@@ -45,6 +49,36 @@ export class CodeLoader {
     }
 }
 
+export class FileCodeLoader extends CodeLoader {
+    constructor(component: Component) {
+        super(component)
+    }
+
+    async load() {
+        const path = this.getFilePath()
+        const code = await this.fetchCodeFromFile(path)
+
+        if (code === undefined) return
+        this.code.set(code)
+    }
+
+    async fetchCodeFromFile(path) {
+        const [result, error] = await safeFetch(path, {
+            credentials: "omit",
+        })
+        if (error) return
+        return result
+    }
+
+    getFilePath() {
+        if (isComponentInHouseFromId(this.component.id)) {
+            return `${PUBLIC_LIB_URL}${Packages[this.component.id].file}`
+        } else {
+            return `${PUBLIC_MARKETPLACE_URL}${this.component?.doc?.data.file}`
+        }
+    }
+}
+
 export class TreeCodeLoader extends CodeLoader {
     imports: Writable<string[]> = writable([])
     htmlComponents: Writable<any[]> = writable([])
@@ -62,9 +96,10 @@ export class TreeCodeLoader extends CodeLoader {
 
     async loadImports() {
         this.imports.set(Array.from(findSvelteImports(this.component.doc!.data.tree)))
-        get(this.imports).forEach(
-            async (id: string) => await Component.init(id, this.component.componentLoader!, this.component.connection!)
-        )
+
+        for (const componentId of get(this.imports)) {
+            await Component.init(componentId, this.component.componentLoader!, this.component.connection!)
+        }
     }
 
     generateSvelteDOM() {

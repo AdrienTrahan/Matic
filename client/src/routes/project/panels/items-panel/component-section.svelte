@@ -1,19 +1,27 @@
 <!-- @format -->
 <script lang="ts">
-    import type { Component } from "$framework/component"
+    import type { ParentComponent } from "$framework/component"
+    import { ComponentLoader } from "$framework/loader"
     import type { Project } from "$framework/project"
     import Button from "$lib/components/ui/button/button.svelte"
     import * as Dialog from "$lib/components/ui/dialog"
     import { Input } from "$lib/components/ui/input"
     import { Label } from "$lib/components/ui/label"
-    import { PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import { LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { COMPONENT_NAME_REGEX } from "$shared/validation"
     import { createEventDispatcher, getContext } from "svelte"
+    import type { Writable } from "svelte/store"
     const dispatch = createEventDispatcher()
 
     const project: Project = getContext(PROJECT_CONTEXT_KEY)
-    export let current: Component | undefined
+    const loader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
+    const current: Writable<ParentComponent | undefined> = loader.main
+
     const { data: projectData } = project
+
+    $: currentComponent = Object.keys($projectData.library).some(component => $current && component == $current?.id)
+        ? $current
+        : undefined
 
     let newComponentName: string = ""
 
@@ -33,6 +41,8 @@
 
         newComponentName = ""
         newComponentDialogOpened = false
+
+        selectComponentWithId(result.id)
     }
 
     function selectComponentWithId(id: string) {
@@ -41,20 +51,25 @@
 </script>
 
 <div class="flex-1 flex flex-col">
+    <h1 class="text-lg font-bold mx-4 my-2">Components</h1>
     <div class="flex-1">
         {#each components as [id, name]}
             <div class="flex my-0">
                 <Button
                     on:click={() => selectComponentWithId(id)}
-                    variant={current && current.id == id ? "secondary" : "ghost"}
-                    class="flex-1 mx-2 justify-start capitalize shadow-none"
-                    size="sm">{name}</Button>
+                    variant={currentComponent && currentComponent.id == id ? "secondary" : "ghost"}
+                    class="flex-1 mx-2 justify-between capitalize shadow-none"
+                    size="sm"
+                    >{name}
+                </Button>
             </div>
         {/each}
     </div>
     <div class="p-2 w-full flex">
-        <Button on:click={() => (newComponentDialogOpened = true)} variant="secondary" class="flex-1 text-blue-600"
-            >New Component</Button>
+        <Button
+            on:click={() => (newComponentDialogOpened = true)}
+            variant="secondary"
+            class="flex-1 text-blue-600 text-xs">New Component</Button>
     </div>
 </div>
 

@@ -9,11 +9,10 @@ export function getDefaultComponentStructure(componentId: string) {
         type: ComponentTypes.TREE,
         tree: [
             [
-                {
-                    id: "IH_0",
-                    inhouse: true,
-                    children: [],
-                },
+                // {
+                //     id: "IH_0",
+                //     children: [],
+                // },
             ],
         ],
         slots: ["children"],

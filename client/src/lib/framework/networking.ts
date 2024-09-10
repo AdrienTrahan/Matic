@@ -12,10 +12,7 @@ export async function safeFetch(...args: any[]) {
             if (data.ok) {
                 return (isJSON ? data.json() : data.text()).then(data => [data, null]).catch(error => [null, error])
             } else {
-                return (isJSON ? data.json() : data.text())
-                    .json()
-                    .then(data => [null, data])
-                    .catch(error => [null, error])
+                return (isJSON ? data.json() : data.text()).then(data => [null, data]).catch(error => [null, error])
             }
         })
         .catch(error => {

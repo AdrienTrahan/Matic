@@ -1,66 +1,68 @@
-import Worker from './workers/bundler/index.js?worker';
-import type { Bundle, File } from './types';
-import type { BundleMessageData } from './workers/workers';
+/** @format */
 
-const workers = new Map();
+import Worker from "./workers/bundler/index.js?worker"
+import type { Bundle, File } from "./types"
+import type { BundleMessageData } from "./workers/workers"
 
-let uid = 1;
+const workers = new Map()
+
+let uid = 1
 
 export default class Bundler {
-	worker: Worker;
-	handlers: Map<number, (...arg: any) => void> = new Map();
-	constructor({
-		packages_url,
-		svelte_url,
-		onstatus
-	}: {
-		packages_url: string;
-		svelte_url: string;
-		onstatus: (val: string | null) => void;
-	}) {
-		const hash = `${packages_url}:${svelte_url}`;
+    worker: Worker
+    handlers: Map<number, (...arg: any) => void> = new Map()
+    constructor({
+        packages_url,
+        svelte_url,
+        onstatus,
+    }: {
+        packages_url: string
+        svelte_url: string
+        onstatus: (val: string | null) => void
+    }) {
+        const hash = `${packages_url}:${svelte_url}`
 
-		if (!workers.has(hash)) {
-			const worker = new Worker();
-			worker.postMessage({ type: 'init', packages_url, svelte_url });
-			workers.set(hash, worker);
-		}
+        if (!workers.has(hash)) {
+            const worker = new Worker()
+            worker.postMessage({ type: "init", packages_url, svelte_url })
+            workers.set(hash, worker)
+        }
 
-		this.worker = workers.get(hash);
+        this.worker = workers.get(hash)
 
-		this.handlers = new Map();
+        this.handlers = new Map()
 
-		this.worker.addEventListener('message', (event: MessageEvent<BundleMessageData>) => {
-			const handler = this.handlers.get(event.data.uid);
+        this.worker.addEventListener("message", (event: MessageEvent<BundleMessageData>) => {
+            const handler = this.handlers.get(event.data.uid)
 
-			if (handler) {
-				if (event.data.type === 'status') {
-					onstatus(event.data.message);
-					return;
-				}
+            if (handler) {
+                if (event.data.type === "status") {
+                    onstatus(event.data.message)
+                    return
+                }
 
-				onstatus(null);
-				handler(event.data);
-				this.handlers.delete(event.data.uid);
-			}
-		});
-	}
+                onstatus(null)
+                handler(event.data)
+                this.handlers.delete(event.data.uid)
+            }
+        })
+    }
 
-	bundle(files: File[]): Promise<Bundle> {
-		return new Promise((fulfil) => {
-			this.handlers.set(uid, fulfil);
+    bundle(files: File[]): Promise<Bundle> {
+        return new Promise(fulfil => {
+            this.handlers.set(uid, fulfil)
 
-			this.worker.postMessage({
-				uid,
-				type: 'bundle',
-				files
-			});
+            this.worker.postMessage({
+                uid,
+                type: "bundle",
+                files,
+            })
 
-			uid += 1;
-		});
-	}
+            uid += 1
+        })
+    }
 
-	destroy() {
-		this.worker.terminate();
-	}
+    destroy() {
+        this.worker.terminate()
+    }
 }

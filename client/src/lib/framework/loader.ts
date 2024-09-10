@@ -3,6 +3,7 @@
 import {
     compileComponentList2SvelteList,
     compileSvelteImports,
+    createBindingsObject,
     createSvelteFile,
     findSvelteImports,
     flattenHMTL,
@@ -108,8 +109,9 @@ export class TreeCodeLoader extends CodeLoader {
 
     updateCode() {
         const svelteImportsCode = compileSvelteImports(get(this.imports))
+        const svelteBindingsCode = createBindingsObject(this.component.doc?.data.tree)
         const svelteDomCode = flattenHMTL(get(this.htmlComponents))
-        const svelteFileCode = createSvelteFile(svelteImportsCode, svelteDomCode)
+        const svelteFileCode = createSvelteFile(svelteImportsCode, svelteBindingsCode, svelteDomCode)
         this.code.set(svelteFileCode)
     }
 }

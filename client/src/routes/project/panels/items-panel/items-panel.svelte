@@ -3,9 +3,9 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card"
     import * as Tabs from "$lib/components/ui/tabs"
-    import ComponentSection from "./component-section.svelte"
-    import LayersSection from "./layers-section.svelte"
-    import PageSection from "./page-section.svelte"
+    import ComponentSection from "./component-section/component-section.svelte"
+    import LayersSection from "./layers-section/layers-section.svelte"
+    import PageSection from "./page-section/page-section.svelte"
     let selectedSection = "page"
 </script>
 

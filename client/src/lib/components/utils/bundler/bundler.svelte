@@ -7,9 +7,10 @@
     import Bundler from "./Bundler"
     import type { Handlers } from "./proxy"
     import type { Bundle, File } from "./types"
+    import { PUBLIC_SVELTE_VERSION } from "$env/static/public"
 
     export let packagesUrl = "https://unpkg.com"
-    export let svelteUrl = `${packagesUrl}/svelte`
+    export let svelteUrl = `${packagesUrl}/svelte@${PUBLIC_SVELTE_VERSION}`
 
     export let files: File[] = []
     export let injectedJS = ""
@@ -42,6 +43,10 @@
     }
 
     $: {
+        for (const proxy of proxies) {
+            proxy.destroy()
+        }
+
         proxies = []
         for (let i = 0; i < iframes.length; i++) {
             const iframe = iframes[i]
@@ -63,6 +68,10 @@
                     on_console_group: handlers.on_console_group,
                     on_console_group_end: handlers.on_console_group_end,
                     on_console_group_collapsed: handlers.on_console_group_collapsed,
+                    on_update_hitboxes: (...args) =>
+                        handlers.on_update_hitboxes && handlers.on_update_hitboxes(i, ...args),
+                    on_update_outlines: (...args) =>
+                        handlers.on_update_outlines && handlers.on_update_outlines(i, ...args),
                 }),
             )
 

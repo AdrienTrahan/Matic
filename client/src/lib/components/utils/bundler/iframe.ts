@@ -80,6 +80,7 @@ const srcdoc: string = `<!DOCTYPE html>
 					window.addEventListener('unhandledrejection', (event) => {
 						parent.postMessage({ action: 'unhandledrejection', value: event.reason }, '*');
 					});
+
 				}).call(this);
 		
 				let previous = { level: null, args: null };

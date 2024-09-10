@@ -2,13 +2,21 @@
 
 import { type File } from "$lib/components/utils/bundler"
 import { Packages } from "$shared/packages"
-import { COMPONENT_COLLECTION, ComponentTypes, isComponentInHouseFromId } from "$shared/sharedb"
+import {
+    COMPONENT_COLLECTION,
+    ComponentTypes,
+    generateEntrySvelteComponent,
+    isComponentInHouseFromId,
+} from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
 import { writable, type Writable } from "svelte/store"
 import { FileCodeLoader, TreeCodeLoader, type CodeLoader, type ComponentLoader } from "./loader"
+import { injectUniqueId } from "./selector"
 
 export class Component {
     componentLoader: ComponentLoader
+
+    data: Writable<any> = writable({})
 
     id: string
     connection: Connection | undefined
@@ -36,12 +44,12 @@ export class Component {
     async from(connection: Connection) {
         this.connection = connection
 
-        if (isComponentInHouseFromId(this.id)) {
-            this.componentType = ComponentTypes.FILE
-        } else {
-            await this.loadDocument()
-            this.componentType = this.doc?.data.type ?? ComponentTypes.FILE
-        }
+        await this.loadData()
+
+        this.componentType = isComponentInHouseFromId(this.id)
+            ? ComponentTypes.FILE
+            : this.doc?.data.type ?? ComponentTypes.FILE
+
         switch (this.componentType) {
             case ComponentTypes.TREE:
                 this.codeLoader = new TreeCodeLoader(this)
@@ -57,9 +65,23 @@ export class Component {
         return this
     }
 
+    async loadData() {
+        if (isComponentInHouseFromId(this.id)) {
+            return this.loadPackage()
+        }
+        await this.loadDocument()
+    }
+
+    loadPackage() {
+        this.data.set(Packages[this.id])
+    }
+
     async loadDocument() {
         this.doc = this.connection!.get(COMPONENT_COLLECTION, this.id)
-        await new Promise<void>((resolve, reject) => this.doc!.fetch(err => (err ? reject(err) : resolve())))
+        // this.doc.on("op", () => {})
+        await new Promise<void>((resolve, reject) => this.doc!.subscribe(err => (err ? reject(err) : resolve())))
+        const injectTree = injectUniqueId(this.doc.data)
+        this.data.set(injectTree)
     }
 }
 
@@ -79,14 +101,22 @@ export class ParentComponent extends Component {
 
     bundleCode() {
         let files = [this, ...Object.values(this.componentLoader.loadedComponents)].map(
-            (component: Component, index: number): File => {
+            (component: Component): File => {
                 return {
-                    name: index == 0 ? "App" : component.id,
+                    name: component.id,
                     type: "svelte",
                     source: component.codeLoader!.getCode(),
                 }
             }
         )
+        files = [
+            {
+                name: "App",
+                type: "svelte",
+                source: generateEntrySvelteComponent(this.id),
+            },
+            ...files,
+        ]
 
         this.bundle.set(files)
     }

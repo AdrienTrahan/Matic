@@ -6,6 +6,7 @@
     import { getContext } from "svelte"
     import type { Writable } from "svelte/store"
     import { cn } from "$lib/utils"
+    import { hoveredElement } from "$framework/selector"
 
     export let layer
     const componentLoader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
@@ -17,7 +18,11 @@
 </script>
 
 <div>
-    <div class="mx-2 p-2 rounded-md text-xs font-medium flex">
+    <div
+        class={cn(
+            "mx-2 p-2 rounded-md text-xs font-medium flex",
+            $hoveredElement?.uniqueId && layer.unique == $hoveredElement?.uniqueId ? "bg-zinc-100" : "",
+        )}>
         <div class="w-6 -ml-1">
             {#if slots.length > 0}
                 <button on:click={() => (collapsed = !collapsed)} class="my-auto cursor-pointer">

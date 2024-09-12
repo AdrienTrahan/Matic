@@ -57,21 +57,13 @@
                         pending_imports = progress
                         handlers.on_fetch_progress && handlers.on_fetch_progress(progress)
                     },
-                    on_error: handlers.on_error,
                     on_unhandled_rejection: event => {
                         let error = event.value
                         if (typeof error === "string") error = { message: error }
                         error.message = "Uncaught (in promise): " + error.message
                         handlers.on_unhandled_rejection && handlers.on_unhandled_rejection(event)
                     },
-                    on_console: handlers.on_console,
-                    on_console_group: handlers.on_console_group,
-                    on_console_group_end: handlers.on_console_group_end,
-                    on_console_group_collapsed: handlers.on_console_group_collapsed,
-                    on_update_hitboxes: (...args) =>
-                        handlers.on_update_hitboxes && handlers.on_update_hitboxes(i, ...args),
-                    on_update_outlines: (...args) =>
-                        handlers.on_update_outlines && handlers.on_update_outlines(i, ...args),
+                    ...handlers,
                 }),
             )
 

@@ -2,7 +2,7 @@
 <script lang="ts">
     import type { ParentComponent } from "$framework/component"
     import type { ComponentLoader } from "$framework/loader"
-    import { resetHitboxes, updateHitboxes, updateHoverState } from "$framework/selector"
+    import { resetHitboxes, updateHitboxes } from "$framework/selector"
     import { Bundler, srcdoc } from "$lib/components/utils/bundler"
     import { LOADER_CONTEXT_KEY } from "$lib/constants"
     import { getContext } from "svelte"
@@ -23,7 +23,7 @@
 
     const loader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
     const component: Writable<ParentComponent | undefined> = loader.main
-    $: componentData = $component?.data
+
     $: bundle = $component?.bundle
     $: if (bundle) {
         resetOutlines()
@@ -60,11 +60,7 @@
         theme="light" />
     {#each iframes as iframe, index}
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-            on:mousemove={({ offsetX, offsetY }) => updateHoverState($componentData.tree, index, offsetX, offsetY)}
-            on:mouseenter={({ offsetX, offsetY }) => updateHoverState($componentData.tree, index, offsetX, offsetY)}
-            on:mouseleave={({ offsetX, offsetY }) => updateHoverState($componentData.tree, index, offsetX, offsetY)}
-            class="w-48 h-96 relative bg-white overflow-hidden">
+        <div class="w-48 h-96 relative bg-white overflow-hidden">
             <iframe
                 class="pointer-events-none select-none w-full h-full"
                 title="Preview"

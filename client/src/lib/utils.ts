@@ -75,3 +75,25 @@ export function getRGBColor(color) {
     document.body.appendChild(d)
     return window.getComputedStyle(d).color
 }
+
+export function serializeObject(object, depth = 0, max_depth = 2) {
+    if (depth > max_depth) return "Object"
+    const obj = {}
+    for (let key in object) {
+        let value = object[key]
+        if (value instanceof Node) value = { id: (value as any).id }
+        else if (value instanceof Window) value = "Window"
+        else if (value instanceof Object) value = serializeObject(value, depth + 1, max_depth)
+
+        obj[key] = value
+    }
+    return obj
+}
+
+export function clearObjectProperties(object) {
+    return Object.fromEntries(
+        Object.entries(object).filter(
+            ([key, value]: [string, any]) => typeof value !== "object" && typeof value !== "function"
+        )
+    )
+}

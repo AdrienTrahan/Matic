@@ -40,7 +40,7 @@ export function updateHoverState(tree: any, viewIndex: number, x: number, y: num
 }
 
 function getElementAt(tree: any, viewIndex: number, x: number, y: number): any {
-    if (x < 0 || y < 0) return null
+    if (x < 0 || y < 0 || viewIndex < 0) return null
     let pathLength = 0
     let selectedElement = null
 
@@ -86,4 +86,8 @@ export function injectUniqueId(data: any) {
     inject(data.tree)
 
     return data
+}
+
+export function deselectCurrentHover() {
+    hoveredElement.set(null)
 }

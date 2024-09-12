@@ -15,8 +15,6 @@ export default class ReplProxy {
         on_console_group_collapsed: noop,
         on_console_group_end: noop,
         on_unhandled_rejection: noop,
-        on_update_hitboxes: noop,
-        on_update_outlines: noop,
     }
 
     pending_cmds: Map<number, { resolve: (value: any) => void; reject: (value: any) => void }> = new Map()
@@ -68,10 +66,8 @@ export default class ReplProxy {
                 return this.handlers.on_console_group_collapsed && this.handlers.on_console_group_collapsed(event.data)
             case "console_group_end":
                 return this.handlers.on_console_group_end && this.handlers.on_console_group_end(event.data)
-            case "update_hitboxes":
-                return this.handlers.on_update_hitboxes && this.handlers.on_update_hitboxes(event.data.data)
-            case "update_outlines":
-                return this.handlers.on_update_outlines && this.handlers.on_update_outlines(event.data.data)
+            default:
+                return this.handlers[action] && this.handlers[action](event.data)
         }
     }
 

@@ -9,9 +9,28 @@
 
     let container
 
+    const allPointerAndMouseEvents = [
+        // Pointer Events
+        "pointerdown",
+        "pointermove",
+        "pointerup",
+        "pointercancel",
+        "gotpointercapture",
+        "lostpointercapture",
+        "pointerrawupdate",
+
+        // Mouse Events
+        "click",
+        "dblclick",
+        "mousedown",
+        "mouseup",
+        "mousemove",
+        "contextmenu",
+    ]
+
     onMount(() => {
         if (!container) return
-        ;["click", "mousemove"].forEach(eventName => {
+        allPointerAndMouseEvents.forEach(eventName => {
             container.addEventListener(eventName, event => {
                 get(eventHandlers).forEach(handler => {
                     handler({ name: eventName, event })

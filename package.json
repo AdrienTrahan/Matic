@@ -35,6 +35,7 @@
     "sharedb-mongo": "^5.0.0",
     "string-replace-middleware": "^1.1.0",
     "tsc": "^2.0.4",
+    "tsc-watch": "^6.2.0",
     "tsyringe": "^4.8.0",
     "typescript": "^5.4.5",
     "websocket-json-stream": "^0.0.3",

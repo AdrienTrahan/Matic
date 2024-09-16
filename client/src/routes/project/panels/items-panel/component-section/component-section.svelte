@@ -1,21 +1,21 @@
 <!-- @format -->
 <script lang="ts">
     import type { ParentComponent } from "$framework/component"
-    import { ComponentLoader } from "$framework/loader"
+    import { ComponentLoader } from "$framework/element-loader"
     import type { Project } from "$framework/project"
     import Button from "$lib/components/ui/button/button.svelte"
     import * as Dialog from "$lib/components/ui/dialog"
     import { Input } from "$lib/components/ui/input"
     import { Label } from "$lib/components/ui/label"
-    import { LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import { COMPONENT_LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { COMPONENT_NAME_REGEX } from "$shared/validation"
     import { createEventDispatcher, getContext } from "svelte"
     import type { Writable } from "svelte/store"
     const dispatch = createEventDispatcher()
 
     const project: Project = getContext(PROJECT_CONTEXT_KEY)
-    const loader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
-    const current: Writable<ParentComponent | undefined> = loader.main
+    const componentLoader: ComponentLoader = getContext(COMPONENT_LOADER_CONTEXT_KEY)
+    const current: Writable<ParentComponent | undefined> = componentLoader.main
 
     const { data: projectData } = project
 

@@ -2,11 +2,11 @@
 
 import type { Handlers } from "./proxy"
 const noop = () => {}
-let uid = 1
 
 export default class ReplProxy {
     iframe: HTMLIFrameElement
 
+    uid = 1
     handlers: Handlers = {
         on_fetch_progress: noop,
         on_console: noop,
@@ -33,7 +33,7 @@ export default class ReplProxy {
 
     iframe_command(action: string, args: any) {
         return new Promise((resolve, reject) => {
-            const cmd_id = uid++
+            const cmd_id = this.uid++
             this.pending_cmds.set(cmd_id, { resolve, reject })
             this.iframe.contentWindow?.postMessage({ action, cmd_id, args }, "*")
         })
@@ -47,7 +47,6 @@ export default class ReplProxy {
         if (event.source !== this.iframe.contentWindow) return
 
         const { action, args } = event.data
-
         switch (action) {
             case "cmd_error":
             case "cmd_ok":

@@ -7,20 +7,24 @@ export function getDefaultComponentStructure(componentId: string) {
     return {
         id: componentId,
         type: ComponentTypes.TREE,
-        tree: [
+        children: [
             [
                 {
                     id: "IH_0",
                     name: "Frame",
-                    children: [],
-                },
-                {
-                    id: "IH_0",
-                    name: "Frame",
-                    children: [],
+                    children: [
+                        [
+                            {
+                                id: "IH_0",
+                                name: "Frame",
+                                children: [],
+                            },
+                        ],
+                    ],
                 },
             ],
         ],
+        plugins: ["BH_0"],
         slots: ["children"],
     }
 }

@@ -1,17 +1,18 @@
 /** @format */
 
 import { type File } from "$lib/components/utils/bundler"
-import { Packages } from "$shared/packages"
+import { Components } from "$shared/packages"
 import {
     COMPONENT_COLLECTION,
     ComponentTypes,
     generateEntrySvelteComponent,
-    isComponentInHouseFromId,
+    isElementInHouseFromId,
 } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
 import { writable, type Writable } from "svelte/store"
-import { FileCodeLoader, TreeCodeLoader, type CodeLoader, type ComponentLoader } from "./loader"
+import { FileComponentCodeLoader, TreeComponentCodeLoader, type ComponentCodeLoader } from "./code-loader"
 import { injectUniqueId } from "./selector"
+import type { ComponentLoader } from "./element-loader"
 
 export class Component {
     componentLoader: ComponentLoader
@@ -24,10 +25,10 @@ export class Component {
 
     componentType: ComponentTypes = ComponentTypes.TREE
 
-    codeLoader: CodeLoader | undefined
+    codeLoader: ComponentCodeLoader | undefined
 
     get documentData() {
-        return isComponentInHouseFromId(this.id) ? Packages[this.id] : this.doc?.data
+        return isElementInHouseFromId(this.id) ? Components[this.id] : this.doc?.data
     }
 
     protected constructor(id: string, componentLoader: ComponentLoader) {
@@ -37,7 +38,7 @@ export class Component {
 
     static async init(id: string, loader: ComponentLoader, connection: Connection) {
         let component = new Component(id, loader)
-        component = loader.loadComponent(component)
+        component = loader.loadElement(component)
         return await component.from(connection)
     }
 
@@ -46,16 +47,16 @@ export class Component {
 
         await this.loadData()
 
-        this.componentType = isComponentInHouseFromId(this.id)
+        this.componentType = isElementInHouseFromId(this.id)
             ? ComponentTypes.FILE
             : this.doc?.data.type ?? ComponentTypes.FILE
 
         switch (this.componentType) {
             case ComponentTypes.TREE:
-                this.codeLoader = new TreeCodeLoader(this)
+                this.codeLoader = new TreeComponentCodeLoader(this)
                 break
             case ComponentTypes.FILE:
-                this.codeLoader = new FileCodeLoader(this)
+                this.codeLoader = new FileComponentCodeLoader(this)
                 break
             default:
                 throw "Invalid component type"
@@ -66,14 +67,11 @@ export class Component {
     }
 
     async loadData() {
-        if (isComponentInHouseFromId(this.id)) {
-            return this.loadPackage()
-        }
-        await this.loadDocument()
+        return isElementInHouseFromId(this.id) ? this.loadPackage() : this.loadDocument()
     }
 
     loadPackage() {
-        this.data.set(Packages[this.id])
+        this.data.set(Components[this.id])
     }
 
     async loadDocument() {
@@ -89,7 +87,7 @@ export class ParentComponent extends Component {
     bundle: Writable<Array<File> | null> = writable(null)
 
     static async init(id: string, loader: ComponentLoader, connection: Connection): Promise<ParentComponent> {
-        loader.clearLoadedComponents()
+        loader.clearLoadedElements()
 
         const component = await new ParentComponent(id, loader).from(connection)
 

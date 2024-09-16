@@ -16,6 +16,7 @@ export class StaticController extends AbstractController {
 
         router.use("/", express.static("public/site"))
         router.use("/lib", express.static("public/library"))
+        router.use("/plugin", express.static("public/plugins"))
     }
 
     static nonceMiddleWare(req: Request, res: Response, next: NextFunction) {

@@ -9,6 +9,11 @@ import glsl from './plugins/glsl';
 import json from './plugins/json';
 import replace from './plugins/replace';
 
+
+let queue = [];
+// @ts-ignore
+let bundling = false;
+
 if (!DEV) console.warn = function () { };
 
 /** @type {string} */
@@ -56,22 +61,37 @@ self.addEventListener(
 			}
 
 			case 'bundle': {
-				await ready;
-				const { uid, files } = event.data;
+				queue.push(async () => {
+					(await new Promise(async (resolve) => {
+						await ready;
+						const { uid, files } = event.data;
 
-				if (files.length === 0) return;
+						if (files.length === 0) return;
 
-				current_id = uid;
+						current_id = uid;
 
-				setTimeout(async () => {
-					if (current_id !== uid) return;
+						setTimeout(async () => {
+							// @ts-ignore
+							if (current_id !== uid) return resolve();
 
-					const result = await bundle({ uid, files });
+							const result = await bundle({ uid, files });
 
-					if (JSON.stringify(result.error) === JSON.stringify(ABORT)) return;
-					if (result && uid === current_id) postMessage(result);
-				});
+							// @ts-ignore
+							if (JSON.stringify(result.error) === JSON.stringify(ABORT)) return resolve();
+							if (result && uid === current_id) postMessage(result);
+							// @ts-ignore
+							resolve();
+						});
+					}))
 
+					queue.splice(0, 1);
+					(queue[0]) ? queue[0]() : bundling = false;
+				})
+
+				if (!bundling) {
+					queue[0]()
+					bundling = true;
+				}
 				break;
 			}
 		}

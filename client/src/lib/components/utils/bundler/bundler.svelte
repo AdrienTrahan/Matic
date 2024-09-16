@@ -16,7 +16,7 @@
     export let injectedJS = ""
     export let injectedCSS = ""
     export let theme: "light" | "dark" = "light"
-    export let handlers: Handlers = {}
+    export let handlers: Handlers[] = []
     export let disabled: boolean = true
 
     $: disabled = error || pending || pending_imports || !ready || !initialized
@@ -50,20 +50,23 @@
         proxies = []
         for (let i = 0; i < iframes.length; i++) {
             const iframe = iframes[i]
+
+            let handler = handlers[i]
             if (!iframe) continue
+
             proxies.push(
                 new ReplProxy(iframe, {
                     on_fetch_progress: progress => {
                         pending_imports = progress
-                        handlers.on_fetch_progress && handlers.on_fetch_progress(progress)
+                        handler.on_fetch_progress && handler.on_fetch_progress(progress)
                     },
                     on_unhandled_rejection: event => {
                         let error = event.value
                         if (typeof error === "string") error = { message: error }
                         error.message = "Uncaught (in promise): " + error.message
-                        handlers.on_unhandled_rejection && handlers.on_unhandled_rejection(event)
+                        handler.on_unhandled_rejection && handler.on_unhandled_rejection(event)
                     },
-                    ...handlers,
+                    ...handler,
                 }),
             )
 

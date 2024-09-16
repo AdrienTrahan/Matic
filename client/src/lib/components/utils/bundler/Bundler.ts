@@ -6,9 +6,9 @@ import type { BundleMessageData } from "./workers/workers"
 
 const workers = new Map()
 
-let uid = 1
-
 export default class Bundler {
+    uid = 1
+
     worker: Worker
     handlers: Map<number, (...arg: any) => void> = new Map()
     constructor({
@@ -50,15 +50,15 @@ export default class Bundler {
 
     bundle(files: File[]): Promise<Bundle> {
         return new Promise(fulfil => {
-            this.handlers.set(uid, fulfil)
+            this.handlers.set(this.uid, fulfil)
 
             this.worker.postMessage({
-                uid,
+                uid: this.uid,
                 type: "bundle",
                 files,
             })
 
-            uid += 1
+            this.uid++
         })
     }
 

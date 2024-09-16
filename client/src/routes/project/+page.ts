@@ -1,6 +1,6 @@
 /** @format */
 
-import { ComponentLoader } from "$framework/loader"
+import { ComponentLoader, PluginLoader } from "$framework/element-loader"
 import { Project } from "$framework/project"
 import { redirect } from "@sveltejs/kit"
 
@@ -9,7 +9,8 @@ export async function load({ url, fetch }) {
     if (!params.get("id")) throw redirect(307, "/projects")
     const id = parseInt(params.get("id")!).toString()
 
-    const loader = new ComponentLoader()
+    const componentLoader = new ComponentLoader()
+    const pluginLoader = new PluginLoader()
     const project = await Project.init(id)
 
     const [_, error] = await project.loadGeneralProjectData(fetch)
@@ -17,6 +18,7 @@ export async function load({ url, fetch }) {
 
     return {
         project,
-        loader,
+        componentLoader,
+        pluginLoader,
     }
 }

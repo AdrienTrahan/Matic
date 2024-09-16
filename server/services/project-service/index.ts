@@ -5,7 +5,7 @@ import { singleton } from "tsyringe"
 import { DatabaseService } from "../database-service"
 import { UNAUTHORIZED, UNEXPECTED_ERROR_OCCURED } from "../../error"
 import { OTFrontendService } from "../ot-client"
-import { DEFAULT_PROJECT_NAME } from "./contants"
+import { DEFAULT_PROJECT_NAME } from "./constants"
 
 @singleton()
 export class ProjectService {

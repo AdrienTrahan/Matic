@@ -1,17 +1,17 @@
 <!-- @format -->
 <script lang="ts">
     import type { ParentComponent } from "$framework/component"
-    import type { ComponentLoader } from "$framework/loader"
+    import type { ComponentLoader } from "$framework/element-loader"
     import type { Project } from "$framework/project"
     import { Button } from "$lib/components/ui/button"
-    import { LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import { COMPONENT_LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { createEventDispatcher, getContext } from "svelte"
     import type { Writable } from "svelte/store"
     const dispatch = createEventDispatcher()
 
     const project: Project = getContext(PROJECT_CONTEXT_KEY)
-    const loader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
-    const current: Writable<ParentComponent | undefined> = loader.main
+    const componentLoader: ComponentLoader = getContext(COMPONENT_LOADER_CONTEXT_KEY)
+    const current: Writable<ParentComponent | undefined> = componentLoader.main
 
     const { data: projectData } = project
 

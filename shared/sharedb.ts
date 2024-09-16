@@ -1,6 +1,7 @@
 /** @format */
 
 export const INHOUSE_PREFIX = "IH_"
+export const BEHAVORIAL_PREFIX = "BH_"
 
 export function getProjectDocumentId(projectId: string) {
     return `PR_${projectId}`
@@ -10,8 +11,8 @@ export function getComponentDocumentIdPrefix(projectId: string) {
     return `CP_${projectId}-`
 }
 
-export function isComponentInHouseFromId(componentId: string) {
-    return (componentId ?? "").startsWith(INHOUSE_PREFIX)
+export function isElementInHouseFromId(elementId: string) {
+    return (elementId ?? "").startsWith(INHOUSE_PREFIX) || (elementId ?? "").startsWith(BEHAVORIAL_PREFIX)
 }
 
 export function getComponentDocumentId(projectId: string, componentId: string) {
@@ -21,6 +22,7 @@ export function getComponentDocumentId(projectId: string, componentId: string) {
 export const PROJECT_COLLECTION = "PR"
 export const COMPONENT_COLLECTION = "CP"
 export const DEFAULT_COMPONENT_NAME = "Component"
+export const PLUGIN_COLLECTION = "PL"
 
 export enum ComponentTypes {
     TREE = "tree",
@@ -31,18 +33,21 @@ export function createSvelteFile(imports: string, bindings: string, code: string
     return `<script>${imports};${bindings}</script>${code}`
 }
 
-export function renameComponentId(id: string) {
+export function renameElementId(id: string) {
     return (id ?? "").replace(/[\W]+/, "_")
 }
 
 export function generateSvelteComponentOpening(id: string, component: any) {
-    return `<${renameComponentId(id)} unique={"${component.unique}"} bind:this={bindings["${component.unique}"]}>`
+    return `<${renameElementId(id)} bind:this={bindings["${component.unique}"]}>`
 }
 
-export function generateSvelteComponentClosing(id: string) {
-    return `</${renameComponentId(id)}>`
+export function generateSvelteElementClosing(id: string) {
+    return `</${renameElementId(id)}>`
 }
 
+export function generateSveltePluginTag(id: string, unique: string) {
+    return `<${renameElementId(id)} component="${unique}" />`
+}
 export function generateSvelteFragmentSlotOpening(index: number) {
     return `<svelte:fragment slot="${index}">`
 }
@@ -82,7 +87,7 @@ export function createBindingsObject(slots: any[]) {
 }
 
 export function compileSvelteImports(imports: string[]): string {
-    return imports.map(component => `import ${renameComponentId(component)} from "./${component}.svelte";`).join("\n")
+    return imports.map(component => `import ${renameElementId(component)} from "./${component}.svelte";`).join("\n")
 }
 
 export function compileComponentList2SvelteList(slots: any[]): any {
@@ -100,7 +105,7 @@ export function compileList2SvelteList(slots: any[]): any {
         children.map((child: any) => [
             generateSvelteComponentOpening(child.id, child),
             compileList2SvelteList(child.children),
-            generateSvelteComponentClosing(child.id),
+            generateSvelteElementClosing(child.id),
         ]),
         generateSvelteFragmentSlotClosing(),
     ])
@@ -122,48 +127,37 @@ export function flattenHMTL(htmlComponents: any[]): string {
 
 export function generateEntrySvelteComponent(entryComponentId: string) {
     return `<script>
+                ${getDefaultImportsCode()}
                 ${compileSvelteImports([entryComponentId])};
                 let bindings;
-                ${getEditorComponentHandlingCode()}
+                ${getPageLoadingHandlingCode()}
             </script>
-            <${renameComponentId(entryComponentId)} bind:bindings/>
+            <${renameElementId(entryComponentId)} bind:bindings/>
             `
 }
 
-export function getEditorComponentHandlingCode() {
+export function getDefaultImportsCode() {
     return `
-                import { onMount, setContext } from "svelte";
-                import { writable, get } from "svelte/store";
-                function updateHitboxes(id, hitboxes){
-                    parent.postMessage({
-                        action: "update_hitboxes",
-                        data: {
-                            id,
-                            hitboxes
-                        }
-                    }, "*")
-                }
-                function updateOutlines(id, outlines){
-                    parent.postMessage({
-                        action: "update_outlines",
-                        data: {
-                            id,
-                            outlines
-                        }
-                    }, "*")
-                }
+        import { onMount, setContext } from "svelte"
+        import { writable, get } from "svelte/store"
+    `
+}
+export function getPageLoadingHandlingCode() {
+    return `
+        onMount(() => {
+            parent.postMessage({
+                action: "loaded",
+            }, "*") 
+        })
+    `
+}
 
-                onMount(() => {
-                    for (const [id, component] of Object.entries(bindings)) {
-                        if (component.hitboxes !== undefined){
-                            const hitboxes = component.hitboxes;
-                            hitboxes.subscribe((hitboxes) => updateHitboxes(id, hitboxes))
-                        }
-                        if (component.outlines !== undefined){
-                            const outlines = component.outlines;
-                            outlines.subscribe((outlines) => updateOutlines(id, outlines))
-                        }
-                    }
-                })
-            `
+export function flattenComponentWithIds(parentComponent: any, uniques: { [key: string]: any } = {}) {
+    uniques[parentComponent.unique] = parentComponent
+    for (const slot of parentComponent.children) {
+        for (const child of slot) {
+            flattenComponentWithIds(child, uniques)
+        }
+    }
+    return uniques
 }

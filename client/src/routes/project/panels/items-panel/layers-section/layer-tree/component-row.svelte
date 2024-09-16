@@ -1,15 +1,16 @@
 <!-- @format -->
 <script lang="ts">
-    import { TriangleRight } from "svelte-radix"
-    import type { ComponentLoader } from "$framework/loader"
-    import { FALLBACK_LAYER_NAME, LOADER_CONTEXT_KEY } from "$lib/constants"
-    import { getContext } from "svelte"
-    import type { Writable } from "svelte/store"
-    import { cn } from "$lib/utils"
+    import type { Component } from "$framework/component"
+    import type { ComponentLoader } from "$framework/element-loader"
     import { hoveredElement } from "$framework/selector"
+    import { COMPONENT_LOADER_CONTEXT_KEY, FALLBACK_LAYER_NAME } from "$lib/constants"
+    import { cn } from "$lib/utils"
+    import { getContext } from "svelte"
+    import { TriangleRight } from "svelte-radix"
+    import type { Writable } from "svelte/store"
 
     export let layer
-    const componentLoader: ComponentLoader = getContext(LOADER_CONTEXT_KEY)
+    const componentLoader: ComponentLoader = getContext(COMPONENT_LOADER_CONTEXT_KEY)
     const currentComponent = componentLoader.loadedComponents[layer.id]
     const componentData: Writable<any> = currentComponent.data
 

@@ -6,7 +6,6 @@
     export const outlines = writable({});
 
     let divElement;
-    export let unique;
 
     onMount(() => {
         if (!divElement) return
@@ -15,6 +14,6 @@
     })
     
 </script>
-<div {unique} bind:this={divElement} style="background-color: lightgray; width: 100px; height: 100px">
+<div bind:this={divElement} style="background-color: lightgray; width: 100px; height: 100px">
     <slot name="0" />
 </div>

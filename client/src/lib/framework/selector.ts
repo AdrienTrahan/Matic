@@ -1,5 +1,4 @@
 /** @format */
-import type { NullValue } from "@rollup/browser"
 import { get, writable, type Writable } from "svelte/store"
 import uniqid from "uniqid"
 
@@ -44,7 +43,7 @@ function getElementAt(tree: any, viewIndex: number, x: number, y: number): any {
     let pathLength = 0
     let selectedElement = null
 
-    function travelBranches(subtree: any, lastElement: any = null, currentPathLength = pathLength) {
+    function travelBranches(subtree: any, currentPathLength = pathLength) {
         for (var i = 0; i < subtree.length; i++) {
             for (var j = 0; j < subtree[i].length; j++) {
                 const hitboxes = get(hitboxesMap)[viewIndex][subtree[i][j].unique] ?? []
@@ -56,7 +55,7 @@ function getElementAt(tree: any, viewIndex: number, x: number, y: number): any {
                     selectedElement = subtree[i][j]
                 }
 
-                travelBranches(subtree[i][j].children, subtree[i][j], currentPathLength + 2)
+                travelBranches(subtree[i][j].children, currentPathLength + 2)
             }
         }
     }
@@ -71,7 +70,7 @@ function coordinatesMatchesHitboxes(hitboxes: DOMRect[], x: number, y: number) {
 }
 
 export function injectUniqueId(data: any) {
-    if (!data.tree) return data
+    if (!data.children) return data
     const inject = object => {
         for (var i = 0; i < object?.length; i++) {
             for (var j = 0; j < object[i]?.length; j++) {
@@ -82,8 +81,8 @@ export function injectUniqueId(data: any) {
             }
         }
     }
-
-    inject(data.tree)
+    data.unique = uniqid()
+    inject(data.children)
 
     return data
 }

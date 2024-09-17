@@ -45,9 +45,14 @@ export function generateSvelteElementClosing(id: string) {
     return `</${renameElementId(id)}>`
 }
 
-export function generateSveltePluginTag(id: string, unique: string) {
+export function generateSvelteDrawablePluginTag(id: string, unique: string) {
     return `<${renameElementId(id)} component="${unique}" />`
 }
+
+export function generateSvelteInjectedPluginTag(id: string, component: string) {
+    return `<${renameElementId(id)} component={components["${component}"]} {components} />`
+}
+
 export function generateSvelteFragmentSlotOpening(index: number) {
     return `<svelte:fragment slot="${index}">`
 }
@@ -133,6 +138,7 @@ export function generateEntrySvelteComponent(entryComponentId: string) {
                 ${getPageLoadingHandlingCode()}
             </script>
             <${renameElementId(entryComponentId)} bind:bindings/>
+            <Plugins components={bindings} />
             `
 }
 
@@ -140,6 +146,7 @@ export function getDefaultImportsCode() {
     return `
         import { onMount, setContext } from "svelte"
         import { writable, get } from "svelte/store"
+        import Plugins from "./Plugins.svelte";
     `
 }
 export function getPageLoadingHandlingCode() {

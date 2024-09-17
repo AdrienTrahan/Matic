@@ -12,7 +12,7 @@ import type { Connection, Doc } from "sharedb/lib/client"
 import { writable, type Writable } from "svelte/store"
 import { FileComponentCodeLoader, TreeComponentCodeLoader, type ComponentCodeLoader } from "./code-loader"
 import { injectUniqueId } from "./selector"
-import type { ComponentLoader } from "./element-loader"
+import type { ComponentLoader, PluginLoader } from "./element-loader"
 
 export class Component {
     componentLoader: ComponentLoader
@@ -93,11 +93,10 @@ export class ParentComponent extends Component {
 
         loader.registerComponent(component)
 
-        component.bundleCode()
         return component
     }
 
-    bundleCode() {
+    bundleCode(pluginLoader: PluginLoader) {
         let files = [this, ...Object.values(this.componentLoader.loadedComponents)].map(
             (component: Component): File => {
                 return {
@@ -113,7 +112,13 @@ export class ParentComponent extends Component {
                 type: "svelte",
                 source: generateEntrySvelteComponent(this.id),
             },
+            {
+                name: "Plugins",
+                type: "svelte",
+                source: pluginLoader.generateInjectedPlugins(),
+            },
             ...files,
+            ...pluginLoader.generateInjectedPluginsFile(),
         ]
 
         this.bundle.set(files)

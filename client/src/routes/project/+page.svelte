@@ -12,7 +12,7 @@
     } from "$lib/constants"
     import { onMount, setContext } from "svelte"
     import { resize } from "svelte-resize-observer-action"
-    import { writable } from "svelte/store"
+    import { get, writable } from "svelte/store"
     import ItemsPanel from "./panels/items-panel/items-panel.svelte"
     import PropertiesPanel from "./panels/properties-panel/properties-panel.svelte"
     import ToolPanel from "./panels/tool-panel/tool-panel.svelte"
@@ -45,11 +45,14 @@
     async function loadComponent(id: string) {
         const connection = await Connector.get(project.id)
         let parentComponent = await ParentComponent.init(id, componentLoader, connection)
+
         await pluginLoader.loadPluginsFromComponent(parentComponent, connection)
+
+        parentComponent.bundleCode(pluginLoader)
     }
 
     async function switchSelectedComponent(id: string) {
-        loadComponent(id)
+        await loadComponent(id)
     }
 
     onMount(() => {

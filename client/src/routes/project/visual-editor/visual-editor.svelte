@@ -18,7 +18,6 @@
     let previewReady = writable(false)
     let drawingReady = writable(false)
     $: ready = $previewReady && $drawingReady
-
     let previewContainer: HTMLDivElement
     let previewSize = writable({ width: 0, height: 0 })
     $: newDisplacement = derived([previewSize], () => ({

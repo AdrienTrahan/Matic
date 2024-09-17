@@ -14,6 +14,7 @@ export const Components = {
 
 export const Plugins = {
     BH_0: {
-        drawable: "/hover.svelte",
+        drawable: "/hover/drawable.svelte",
+        injected: "/hover/injected.svelte",
     },
 }

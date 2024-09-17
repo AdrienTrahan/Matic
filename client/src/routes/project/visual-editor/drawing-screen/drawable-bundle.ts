@@ -1,10 +1,10 @@
 /** @format */
 
-import type { PluginLoader } from "$framework/element-loader"
-import { compileSvelteImports, generateSveltePluginTag, renameElementId } from "$shared/sharedb"
-import { Plugin } from "$framework/plugin"
-import { getResizeHandlerComponent } from "$framework/drawable/resize-handler"
 import { getPointerInjectionCode } from "$framework/drawable/pointer-inject"
+import { getResizeHandlerComponent } from "$framework/drawable/resize-handler"
+import { getPluginImportsCode, getPluginsFileCode } from "$framework/element-loader"
+import { Plugin } from "$framework/plugin"
+import { generateSvelteDrawablePluginTag } from "$shared/sharedb"
 export const injectedJS = getPointerInjectionCode()
 export function getDrawableBundle(loadedPlugins, pluginsStructure) {
     return [
@@ -16,35 +16,23 @@ export function getDrawableBundle(loadedPlugins, pluginsStructure) {
                 `ipt>
                     import { onMount } from "svelte";
                     import ResizeHandler from "./resize-handler.svelte"
-                    ${getImportsCode(loadedPlugins)}
+                    ${getPluginImportsCode(loadedPlugins, "drawable")}
                     onMount(() => {
                         parent.postMessage({ action: 'load' }, '*');
                     })
                 </sc` +
                 `ript>
                 <ResizeHandler>
-                    ${getHTMLPluginsTags(loadedPlugins, pluginsStructure)}
+                    ${getHTMLDrawablePluginsTags(loadedPlugins, pluginsStructure)}
                 </ResizeHandler>
             `,
         },
         getResizeHandlerComponent(),
-        ...getPluginsFileCode(loadedPlugins),
+        ...getPluginsFileCode(loadedPlugins, "drawable"),
     ]
 }
 
-function getImportsCode(loadedPlugins: { [key: string]: Plugin }) {
-    return compileSvelteImports(
-        Object.entries(loadedPlugins)
-            .map(([id, plugin]) => {
-                let code = plugin.codeLoader?.getCode().drawable
-                if (!code) return
-                return id
-            })
-            .filter(id => typeof id != `undefined`)
-    )
-}
-
-function getHTMLPluginsTags(
+function getHTMLDrawablePluginsTags(
     loadedPlugins: {
         [key: string]: Plugin
     },
@@ -57,22 +45,8 @@ function getHTMLPluginsTags(
     for (const [pluginId, uniques] of Object.entries(pluginsStructure)) {
         if (loadedPlugins[pluginId]?.codeLoader?.getCode().drawable === undefined) continue
         for (const unique of uniques) {
-            tags += `${generateSveltePluginTag(pluginId, unique)}`
+            tags += `${generateSvelteDrawablePluginTag(pluginId, unique)}`
         }
     }
     return tags
-}
-
-function getPluginsFileCode(loadedPlugins: { [key: string]: Plugin }) {
-    return Object.entries(loadedPlugins)
-        .map(([id, plugin]) => {
-            let code = plugin.codeLoader?.getCode().drawable
-            if (!code) return
-            return {
-                name: renameElementId(id),
-                type: "svelte",
-                source: code,
-            }
-        })
-        .filter(plugin => typeof plugin !== "undefined")
 }

@@ -1,6 +1,11 @@
 <!-- @format -->
 <script lang="ts">
-    import { DRAWABLE_SHOWN_CONTEXT_KEY, PANZOOM_TRANSFORM_CONTEXT_KEY, WHEEL_UPDATE_DELAY } from "$lib/constants"
+    import {
+        DOUBLE_CLICK_BLOCK_DELAY,
+        DRAWABLE_SHOWN_CONTEXT_KEY,
+        PANZOOM_TRANSFORM_CONTEXT_KEY,
+        WHEEL_UPDATE_DELAY,
+    } from "$lib/constants"
     import Panzoom from "panzoom"
     import { getContext, onMount, setContext, tick } from "svelte"
     import { resize } from "svelte-resize-observer-action"
@@ -26,6 +31,9 @@
         left: 0,
     })
 
+    let lastTransformDoubleClick = false
+    let doubleClickTimeout: any = null
+
     let panzoom
 
     onMount(() => {
@@ -35,15 +43,23 @@
             maxZoom: 4,
             minZoom: 0.3,
             beforeWheel: event => !event.ctrlKey,
-            beforeMouseDown: () => true,
+            beforeMouseDown: event => !event.altKey,
             zoomDoubleClickSpeed: 1,
+            onDoubleClick: () => {
+                lastTransformDoubleClick = true
+                clearTimeout(doubleClickTimeout)
+                doubleClickTimeout = setTimeout(() => {
+                    lastTransformDoubleClick = false
+                }, DOUBLE_CLICK_BLOCK_DELAY)
+            },
         })
 
-        let wheelEventEndTimeout: any = null
+        let transformEndTimeout: any = null
         panzoom.on("transform", () => {
-            // wheel end
-            clearTimeout(wheelEventEndTimeout)
-            wheelEventEndTimeout = setTimeout(updateAnchorPosition, WHEEL_UPDATE_DELAY)
+            if (!lastTransformDoubleClick) {
+                clearTimeout(transformEndTimeout)
+                transformEndTimeout = setTimeout(updateAnchorPosition, WHEEL_UPDATE_DELAY)
+            }
         })
 
         scrollableContainer.addEventListener(
@@ -60,9 +76,6 @@
             panzoomTransform.set(panzoom.getTransform())
         })
 
-        panzoom.on("zoomend", updateAnchorPosition)
-        panzoom.on("panend", updateAnchorPosition)
-
         updateAnchorPosition()
         displacement.subscribe(async _ => {
             await tick()
@@ -77,14 +90,13 @@
         let { width, height } = scrollableContainer.getBoundingClientRect()
         if ($showDrawable) $showDrawable = false
         await tick()
-        requestAnimationFrame(() => {
-            anchorBox.update(obj => {
-                obj.top = top
-                obj.width = width
-                obj.left = left
-                obj.height = height
-                return obj
-            })
+        await new Promise(resolve => requestAnimationFrame(resolve))
+        anchorBox.update(obj => {
+            obj.top = top
+            obj.width = width
+            obj.left = left
+            obj.height = height
+            return obj
         })
     }
 </script>

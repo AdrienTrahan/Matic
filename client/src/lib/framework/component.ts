@@ -13,6 +13,8 @@ import { writable, type Writable } from "svelte/store"
 import { FileComponentCodeLoader, TreeComponentCodeLoader, type ComponentCodeLoader } from "./code-loader"
 import { injectUniqueId } from "./selector"
 import type { ComponentLoader, PluginLoader } from "./element-loader"
+import ContextInjector from "$shared/injected/context-injector.svelte?raw"
+import MaticConnector from "$shared/injected/connector.js?raw"
 
 export class Component {
     componentLoader: ComponentLoader
@@ -106,19 +108,30 @@ export class ParentComponent extends Component {
                 }
             }
         )
+
         files = [
             {
                 name: "App",
                 type: "svelte",
-                source: generateEntrySvelteComponent(this.id),
+                source: generateEntrySvelteComponent(this.id, true),
             },
             {
                 name: "Plugins",
                 type: "svelte",
-                source: pluginLoader.generateInjectedPlugins(),
+                source: pluginLoader.generatePreviewPlugins(),
+            },
+            {
+                name: "ContextInjector",
+                type: "svelte",
+                source: ContextInjector,
+            },
+            {
+                name: "Matic",
+                type: "js",
+                source: MaticConnector,
             },
             ...files,
-            ...pluginLoader.generateInjectedPluginsFile(),
+            ...pluginLoader.generatePreviewPluginsFile(),
         ]
 
         this.bundle.set(files)

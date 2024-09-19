@@ -1,16 +1,15 @@
 /** @format */
-
-import type { Connection } from "sharedb/lib/client"
-import { get, writable, type Writable } from "svelte/store"
-import { Component, type ParentComponent } from "./component"
-import { Plugin } from "./plugin"
-import { TreeComponentCodeLoader } from "./code-loader"
 import {
     compileSvelteImports,
     flattenComponentWithIds,
-    generateSvelteInjectedPluginTag,
+    generateSveltePreviewPluginTag,
     renameElementId,
 } from "$shared/sharedb"
+import type { Connection } from "sharedb/lib/client"
+import { get, writable, type Writable } from "svelte/store"
+import { TreeComponentCodeLoader } from "./code-loader"
+import { Component, type ParentComponent } from "./component"
+import { Plugin } from "./plugin"
 
 export class ComponentLoader {
     loadedComponents: { [key: string]: Component } = {}
@@ -34,6 +33,7 @@ export class PluginLoader {
         [key: string]: string[]
     }> = writable({})
     loadedPlugins: Writable<{ [key: string]: Plugin }> = writable({})
+    loaded: Writable<boolean> = writable(false)
 
     async loadPluginsFromComponent(parentComponent: ParentComponent, connection: Connection) {
         this.clearLoadedPlugins()
@@ -76,30 +76,41 @@ export class PluginLoader {
         }
 
         this.loadedPlugins.set(newLoadedPlugins)
+        this.loaded.set(true)
     }
 
-    generateInjectedPlugins() {
+    generatePreviewPlugins() {
         return `
             <script>
+                import Matic from "./Matic";
+                import ContextInjector from "./ContextInjector.svelte"
                 import { onMount } from "svelte";
                 export let components;
+                const plugins = {};
                 let loaded = false;
+                $: if (components != undefined) initConnector();
                 $: if (components) loaded = true;
-                ${getPluginImportsCode(get(this.loadedPlugins), "injected")}
+
+                async function initConnector(){
+                    await Matic.init(plugins, "preview");
+                }
+
+                ${getPluginImportsCode(get(this.loadedPlugins), "preview")}
             </script>
             {#if loaded}
-                ${getHTMLInjectedPluginsTags(get(this.loadedPlugins), get(this.pluginsStructure))}
+                ${getHTMLPreviewPluginsTags(get(this.loadedPlugins), get(this.pluginsStructure))}
             {/if}
         `
     }
 
-    generateInjectedPluginsFile() {
-        return getPluginsFileCode(get(this.loadedPlugins), "injected")
+    generatePreviewPluginsFile() {
+        return getPluginsFileCode(get(this.loadedPlugins), "preview")
     }
 
     clearLoadedPlugins() {
         this.loadedPlugins.set({})
         this.pluginsStructure.set({})
+        this.loaded.set(false)
     }
 }
 
@@ -115,7 +126,7 @@ export function getPluginImportsCode(loadedPlugins: { [key: string]: Plugin }, k
     )
 }
 
-function getHTMLInjectedPluginsTags(
+function getHTMLPreviewPluginsTags(
     loadedPlugins: {
         [key: string]: Plugin
     },
@@ -125,9 +136,9 @@ function getHTMLInjectedPluginsTags(
 ) {
     let tags = ``
     for (const [pluginId, uniques] of Object.entries(pluginsStructure)) {
-        if (loadedPlugins[pluginId]?.codeLoader?.getCode().injected === undefined) continue
+        if (loadedPlugins[pluginId]?.codeLoader?.getCode().preview === undefined) continue
         for (const unique of uniques) {
-            tags += `${generateSvelteInjectedPluginTag(pluginId, unique)}`
+            tags += `${generateSveltePreviewPluginTag(pluginId, unique)}`
         }
     }
     return tags

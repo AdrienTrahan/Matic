@@ -7,11 +7,16 @@
         EVENT_INTERCEPTOR_CONTEXT_KEY,
         PLUGIN_LOADER_CONTEXT_KEY,
     } from "$lib/constants"
+    import { registeredIframes, returnMessage } from "$framework/connector-redirect"
     import { clearObjectProperties, serializeObject } from "$lib/utils"
     import { getContext, onMount } from "svelte"
-    import { derived, get, type Writable } from "svelte/store"
+    import { derived, get, type Readable, type Writable } from "svelte/store"
     import uniqid from "uniqid"
-    import { getDrawableBundle, injectedJS } from "./drawable-bundle"
+    import { getDrawableBundle } from "./drawable-bundle"
+
+    import PointerInject from "$shared/injected/pointer-inject.js?raw"
+    import { handleMessage } from "$framework/connector-redirect"
+    import type { File } from "$lib/components/utils/bundler"
 
     export let anchorBox: Writable<{ width: number; height: number; top: number; left: number }>
     export let ready: Writable<boolean>
@@ -19,9 +24,13 @@
     let registeredResizes = {}
     let showDrawable: Writable<boolean> = getContext(DRAWABLE_SHOWN_CONTEXT_KEY)
 
-    const { loadedPlugins, pluginsStructure }: PluginLoader = getContext(PLUGIN_LOADER_CONTEXT_KEY)
+    const { loadedPlugins, pluginsStructure, loaded }: PluginLoader = getContext(PLUGIN_LOADER_CONTEXT_KEY)
 
-    let bundle = derived([loadedPlugins, pluginsStructure], () => getDrawableBundle($loadedPlugins, $pluginsStructure))
+    let bundle: Readable<File[] | undefined> = derived([loaded], () => {
+        if ($loaded) {
+            return getDrawableBundle($loadedPlugins, $pluginsStructure)
+        }
+    })
 
     const events: Writable<Set<any>> = getContext(EVENT_INTERCEPTOR_CONTEXT_KEY)
 
@@ -31,6 +40,7 @@
             $events.delete(onEventHandler)
         }
     })
+    $: registeredIframes.drawable = [iframe]
 
     export const onEventHandler = event => {
         event.event = serializeObject(event.event)
@@ -70,26 +80,32 @@
     }
 </script>
 
-<Bundler
-    {injectedJS}
-    iframes={[iframe]}
-    handlers={[
-        {
-            load: () => {
-                ready.set(true)
-                anchorBoxHasChanged()
+{#if $loaded}
+    <Bundler
+        injectedJS={PointerInject}
+        iframes={[iframe]}
+        handlers={[
+            {
+                load: () => {
+                    ready.set(true)
+                    anchorBoxHasChanged()
+                },
+                resized: iframeHasResized,
+                call: ({ data: { receiverType, senderType, unique, key, args }, messageId }) =>
+                    handleMessage(receiverType, senderType, unique, key, args, messageId),
+                return: ({ data: { senderType, unique, message }, messageId }) =>
+                    returnMessage(senderType, unique, message, messageId),
             },
-            resized: iframeHasResized,
-        },
-    ]}
-    files={$bundle}
-    theme="light" />
-<div class="absolute inset-0">
-    <iframe
-        allowtransparency={true}
-        class="absolute w-full h-full inset-0 z-10 select-none pointer-events-none"
-        title="drawable"
-        bind:this={iframe}
-        {srcdoc}
-        sandbox={["allow-scripts"].join(" ")} />
-</div>
+        ]}
+        files={$bundle}
+        theme="light" />
+    <div class="absolute inset-0">
+        <iframe
+            allowtransparency={true}
+            class="absolute w-full h-full inset-0 z-10 select-none pointer-events-none"
+            title="drawable"
+            bind:this={iframe}
+            {srcdoc}
+            sandbox={["allow-scripts"].join(" ")} />
+    </div>
+{/if}

@@ -77,6 +77,8 @@
     $: if (ready) for (let proxy of proxies) proxy?.iframe_command("set_theme", { theme })
 
     async function apply_bundle($bundle: Bundle) {
+        if ($bundle.error) console.error("Plugin error", $bundle?.error)
+
         if (!$bundle || $bundle.error) return
         try {
             await Promise.all(

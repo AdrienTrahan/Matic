@@ -1,6 +1,7 @@
 <!-- @format -->
 <script lang="ts">
     import type { ParentComponent } from "$framework/component"
+    import { handleMessage, registeredIframes, returnMessage } from "$framework/connector-redirect"
     import type { ComponentLoader } from "$framework/element-loader"
     import { Bundler, srcdoc } from "$lib/components/utils/bundler"
     import { COMPONENT_LOADER_CONTEXT_KEY } from "$lib/constants"
@@ -17,10 +18,16 @@
             loaded: false,
         }))
 
+    $: registeredIframes.preview = iframes.every(iframe => iframe !== null) ? iframes : []
+
     let handlers: any[] = Array(iframes.length)
         .fill(0)
         .map((_, index) => ({
             loaded: () => (iframeData[index].loaded = true),
+            call: ({ data: { receiverType, senderType, unique, key, args }, messageId }) =>
+                handleMessage(receiverType, senderType, unique, key, args, messageId),
+            return: ({ data: { senderType, unique, message }, messageId }) =>
+                returnMessage(senderType, unique, message, messageId),
         }))
 
     export let ready: Writable<boolean>

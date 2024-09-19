@@ -11,4 +11,5 @@ export const DRAWABLE_SHOWN_CONTEXT_KEY = "drawable-shown"
 export const FALLBACK_LAYER_NAME = "Frame"
 
 export const DRAWABLE_EXTRA_PADDING_FACTOR = 1.0
-export const WHEEL_UPDATE_DELAY = 150
+export const WHEEL_UPDATE_DELAY = 300
+export const DOUBLE_CLICK_BLOCK_DELAY = 800

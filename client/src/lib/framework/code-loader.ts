@@ -112,12 +112,12 @@ export class TreeComponentCodeLoader extends ComponentCodeLoader {
 export class PluginCodeLoader extends CodeLoader {
     code: Writable<{
         drawable: string | null
-        injected: string | null
+        preview: string | null
         panel: string | null
         card: string | null
     }> = writable({
         drawable: null,
-        injected: null,
+        preview: null,
         panel: null,
         card: null,
     })
@@ -129,7 +129,7 @@ export class PluginCodeLoader extends CodeLoader {
     async load() {
         const newCode = {
             drawable: null,
-            injected: null,
+            preview: null,
             panel: null,
             card: null,
         }

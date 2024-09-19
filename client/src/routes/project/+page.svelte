@@ -43,6 +43,9 @@
     loadComponent($projectData.pages[Object.keys($projectData.pages)[0]])
 
     async function loadComponent(id: string) {
+        pluginLoader.clearLoadedPlugins()
+        componentLoader.clearLoadedElements()
+
         const connection = await Connector.get(project.id)
         let parentComponent = await ParentComponent.init(id, componentLoader, connection)
 

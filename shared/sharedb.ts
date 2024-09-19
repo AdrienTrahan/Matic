@@ -46,11 +46,15 @@ export function generateSvelteElementClosing(id: string) {
 }
 
 export function generateSvelteDrawablePluginTag(id: string, unique: string) {
-    return `<${renameElementId(id)} component="${unique}" />`
+    return contextInject(unique, `<${renameElementId(id)} bind:this={plugins["${unique}"]} />`)
 }
 
-export function generateSvelteInjectedPluginTag(id: string, component: string) {
-    return `<${renameElementId(id)} component={components["${component}"]} {components} />`
+export function contextInject(unique: string, content: string) {
+    return `<ContextInjector unique="${unique}">${content}</ContextInjector>`
+}
+
+export function generateSveltePreviewPluginTag(id: string, unique: string) {
+    return contextInject(unique, `<${renameElementId(id)} bind:this={plugins["${unique}"]} {components} />`)
 }
 
 export function generateSvelteFragmentSlotOpening(index: number) {
@@ -130,7 +134,7 @@ export function flattenHMTL(htmlComponents: any[]): string {
     return flatHTML.join("")
 }
 
-export function generateEntrySvelteComponent(entryComponentId: string) {
+export function generateEntrySvelteComponent(entryComponentId: string, usePlugins = false) {
     return `<script>
                 ${getDefaultImportsCode()}
                 ${compileSvelteImports([entryComponentId])};
@@ -138,7 +142,7 @@ export function generateEntrySvelteComponent(entryComponentId: string) {
                 ${getPageLoadingHandlingCode()}
             </script>
             <${renameElementId(entryComponentId)} bind:bindings/>
-            <Plugins components={bindings} />
+            ${usePlugins ? "<Plugins components={bindings} />" : ""}
             `
 }
 
@@ -167,4 +171,8 @@ export function flattenComponentWithIds(parentComponent: any, uniques: { [key: s
         }
     }
     return uniques
+}
+
+export function injectCode(code: string, codeInjector: (code: string) => string = code => code) {
+    return codeInjector(code)
 }

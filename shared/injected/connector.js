@@ -1,8 +1,12 @@
 import { getContext, setContext } from "svelte";
-
+import { writable, get } from "svelte/store"
 let type;
 let plugins;
 let id = 0;
+let readyHandlers = [];
+
+const viewType = window.Matic.viewType;
+const iframeIndex = window.Matic.iframeIndex;
 
 if (!window?.Matic?.handleMessage) {
     window.addEventListener("message", handleMessage);
@@ -11,17 +15,18 @@ if (!window?.Matic?.handleMessage) {
     window.Matic.sentMessages = {};
 }
 
+
 async function handleMessage({ data: { action, data, messageId } }) {
     if (action === "call") {
         handleCall(data, messageId)
     } else if (action === "return") {
-        if (typeof window.Matic.sentMessages === "object" &&
-            window.Matic.sentMessages[data.unique] !== undefined &&
-            typeof window.Matic.sentMessages[data.unique][messageId] === "function") {
-            const resolveFunction = window.Matic.sentMessages[data.unique][messageId];
-            resolveFunction(data.message);
-        }
-
+        handleReturn(data, messageId)
+    } else if (action === "alert") {
+        handleAlert(data.action, data.data)
+    } else if (action === "transform") {
+        if (get(Matic.scaleFactor) != data.scaleFactor) Matic.scaleFactor.set(data.scaleFactor)
+        if (get(Matic.isZooming) != data.isZooming) Matic.isZooming.set(data.isZooming)
+        if (get(Matic.isTransforming) != data.isTransforming) Matic.isTransforming.set(data.isTransforming)
     }
 }
 
@@ -38,6 +43,23 @@ async function handleCall({ type: senderType, unique, key, args }, messageId) {
         }
     }
     returnMessage(unique, senderType, responseMessage, messageId);
+}
+
+function handleReturn({ message, unique }, messageId) {
+    if (typeof window.Matic.sentMessages === "object" &&
+        window.Matic.sentMessages[unique] !== undefined &&
+        typeof window.Matic.sentMessages[unique][messageId] === "function") {
+        const resolveFunction = window.Matic.sentMessages[unique][messageId];
+        resolveFunction(message);
+    }
+}
+
+function handleAlert(type, data) {
+    switch (type) {
+        case "ready":
+            setIsPluginMounted();
+            break;
+    }
 }
 
 async function sendMessage(unique, receiverType, key, args) {
@@ -72,6 +94,10 @@ function returnMessage(unique, type, message, messageId) {
         },
         messageId: messageId
     }, "*")
+}
+
+function sendSetting(setting, data) {
+    parent.postMessage({ action: "setting", setting, data }, "*")
 }
 
 
@@ -117,11 +143,45 @@ export default function Matic() {
     throw "Matic must be initialized at the top level of a Plugin"
 }
 
+async function setIsReady() {
+    if (iframeIndex !== undefined) setHeight(iframeIndex);
+    sendSetting("ready", { type })
+}
+
+function setHeight(index) {
+    sendSetting("height-changed", {
+        iframe: index,
+        height: document.documentElement.scrollHeight
+    })
+}
+
 Matic.init = async function (newPlugins, newType) {
     if (plugins != undefined && type != undefined) return;
     delete Matic.init;
     plugins = newPlugins;
     type = newType
+
+    setIsReady();
+}
+
+Matic.onReady = function (callback) {
+    readyHandlers.push(callback);
 }
 
 Matic.ACTIVE_PLUGIN_CONTEXT_KEY = "ACTIVE_PLUGIN";
+
+Matic.isZooming = writable(false)
+Matic.isTransforming = writable(false)
+Matic.scaleFactor = writable(1.0);
+
+
+Matic.getBreakpoint = () => {
+    return iframeIndex;
+}
+
+function setIsPluginMounted() {
+    for (const readyHandler of readyHandlers) {
+        readyHandler();
+    }
+    readyHandlers = [];
+}

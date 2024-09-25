@@ -63,8 +63,7 @@
     })
 
     function setDisplacement() {
-        const { x, y, width, height } = editorSection.getBoundingClientRect()
-        displacement = { x: x + width / 2, y: y + height / 2 }
+        displacement = editorSection.getBoundingClientRect()
     }
 </script>
 

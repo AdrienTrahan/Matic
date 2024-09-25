@@ -5,6 +5,8 @@ import { Plugin } from "$framework/plugin"
 import MaticConnector from "$shared/injected/connector.js?raw"
 import ContextInjector from "$shared/injected/context-injector.svelte?raw"
 import ResizeHandler from "$shared/injected/resize-handler.svelte?raw"
+import TailwindColors from "$shared/injected/tailwind-colors.svelte?raw"
+import EditorStyle from "$shared/injected/editor-style.svelte?raw"
 import { generateSvelteDrawablePluginTag } from "$shared/sharedb"
 
 export function getDrawableBundle(loadedPlugins, pluginsStructure) {
@@ -13,8 +15,11 @@ export function getDrawableBundle(loadedPlugins, pluginsStructure) {
             name: "App",
             type: "svelte",
             source:
-                `<scr` +
+                `
+                <scr` +
                 `ipt>
+                    import TailwindColors from "./TailwindColors.svelte";
+                    import EditorStyle from "./EditorStyle.svelte";
                     import Matic from "./Matic";
                     import ContextInjector from "./ContextInjector.svelte";
                     import { onMount } from "svelte";
@@ -27,6 +32,8 @@ export function getDrawableBundle(loadedPlugins, pluginsStructure) {
                     })
                 </sc` +
                 `ript>
+                <TailwindColors/>
+                <EditorStyle />
                 <ResizeHandler>
                     ${getHTMLDrawablePluginsTags(loadedPlugins, pluginsStructure)}
                 </ResizeHandler>
@@ -46,6 +53,16 @@ export function getDrawableBundle(loadedPlugins, pluginsStructure) {
             name: "ResizeHandler",
             type: "svelte",
             source: ResizeHandler,
+        },
+        {
+            name: "TailwindColors",
+            type: "svelte",
+            source: TailwindColors,
+        },
+        {
+            name: "EditorStyle",
+            type: "svelte",
+            source: EditorStyle,
         },
         ...getPluginsFileCode(loadedPlugins, "drawable"),
     ]

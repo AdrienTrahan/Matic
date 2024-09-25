@@ -3,27 +3,40 @@
     import {
         DOUBLE_CLICK_BLOCK_DELAY,
         DRAWABLE_SHOWN_CONTEXT_KEY,
+        IS_TRANSFORMING_CONTEXT_KEY,
+        IS_ZOOMING_CONTEXT_KEY,
         PANZOOM_TRANSFORM_CONTEXT_KEY,
+        SCALE_FACTOR_CONTEXT_KEY,
         WHEEL_UPDATE_DELAY,
+        ZOOM_UPDATE_DELAY,
     } from "$lib/constants"
+    import { cn } from "$lib/utils"
     import Panzoom from "panzoom"
     import { getContext, onMount, setContext, tick } from "svelte"
     import { resize } from "svelte-resize-observer-action"
-    import { writable, type Writable } from "svelte/store"
+    import { derived, writable, type Writable } from "svelte/store"
     import EventInterceptor from "./drawing-screen/event-interceptor.svelte"
-    import { cn } from "$lib/utils"
+
+    const panzoomTransform: Writable<{ x: number; y: number; scale: number }> =
+        getContext(PANZOOM_TRANSFORM_CONTEXT_KEY)
+    export let initialZoom: number
 
     let scrollableContainer: HTMLDivElement
     let scrollableContent: HTMLDivElement
     let anchorContainer: HTMLDivElement
     let showDrawable: Writable<boolean> = writable(true)
+    let isTransforming: Writable<boolean> = writable(false)
+    let isZooming: Writable<boolean> = writable(false)
+    let scaleFactor = derived([panzoomTransform], ([{ scale }]) => scale)
+
     let eventHandler = () => {}
 
     setContext(DRAWABLE_SHOWN_CONTEXT_KEY, showDrawable)
+    setContext(IS_ZOOMING_CONTEXT_KEY, isZooming)
+    setContext(IS_TRANSFORMING_CONTEXT_KEY, isTransforming)
+    setContext(SCALE_FACTOR_CONTEXT_KEY, scaleFactor)
 
     export let displacement
-    const panzoomTransform: Writable<{ x: number; y: number; scale: number }> =
-        getContext(PANZOOM_TRANSFORM_CONTEXT_KEY)
     export const anchorBox: Writable<{ width: number; height: number; top: number; left: number }> = writable({
         width: 10,
         height: 10,
@@ -31,7 +44,9 @@
         left: 0,
     })
 
-    let lastTransformDoubleClick = false
+    let zoomingTimeout: any = null
+
+    let isDoubleClicking = false
     let doubleClickTimeout: any = null
 
     let panzoom
@@ -40,23 +55,28 @@
         panzoom = Panzoom(scrollableContent, {
             smoothScroll: false,
             zoomSpeed: 2,
-            maxZoom: 4,
-            minZoom: 0.3,
+            maxZoom: 2,
+            minZoom: 0.1,
+            initialZoom: 1,
             beforeWheel: event => !event.ctrlKey,
             beforeMouseDown: event => !event.altKey,
             zoomDoubleClickSpeed: 1,
             onDoubleClick: () => {
-                lastTransformDoubleClick = true
+                isDoubleClicking = true
+
                 clearTimeout(doubleClickTimeout)
                 doubleClickTimeout = setTimeout(() => {
-                    lastTransformDoubleClick = false
+                    isDoubleClicking = false
+                    isTransforming.update(x => x)
+                    isZooming.update(x => x)
                 }, DOUBLE_CLICK_BLOCK_DELAY)
             },
         })
 
         let transformEndTimeout: any = null
         panzoom.on("transform", () => {
-            if (!lastTransformDoubleClick) {
+            if (!isDoubleClicking) {
+                $isTransforming = true
                 clearTimeout(transformEndTimeout)
                 transformEndTimeout = setTimeout(updateAnchorPosition, WHEEL_UPDATE_DELAY)
             }
@@ -76,14 +96,21 @@
             panzoomTransform.set(panzoom.getTransform())
         })
 
-        updateAnchorPosition()
-        displacement.subscribe(async _ => {
-            await tick()
-            updateAnchorPosition()
+        panzoom.on("zoom", () => {
+            if (!isDoubleClicking) {
+                $isZooming = true
+                clearTimeout(zoomingTimeout)
+                zoomingTimeout = setTimeout(() => {
+                    $isZooming = false
+                }, ZOOM_UPDATE_DELAY)
+            }
         })
+
+        updateAnchorPosition()
     })
 
     export async function updateAnchorPosition() {
+        $isTransforming = false
         if (!anchorContainer || !scrollableContainer) return
 
         let { top, left } = anchorContainer.getBoundingClientRect()
@@ -105,22 +132,25 @@
 <div use:resize={updateAnchorPosition} class="absolute inset-0 overflow-hidden">
     <EventInterceptor on:event={eventHandler}>
         <div bind:this={scrollableContainer} class="absolute inset-0 overflow-visible pointer-events-auto">
-            <div bind:this={scrollableContent} class="absolute inset-0 pointer-events-none">
-                <div class="absolute top-[50%]" style="left:{$displacement.x}px;top:{$displacement.y}px;">
+            <div
+                bind:this={scrollableContent}
+                class="absolute inset-0 pointer-events-none flex justify-center items-center">
+                <div class="absolute">
+                    <div class="bg-red-500 w-10 h-10 z-50 absolute"></div>
                     <slot />
                 </div>
             </div>
             <div
                 bind:this={anchorContainer}
                 class="absolute pointer-events-none"
-                style="left:{$displacement.x * $panzoomTransform.scale + $panzoomTransform.x}px;top:{$displacement.y *
+                style="left:{displacement.x * $panzoomTransform.scale + $panzoomTransform.x}px;top:{displacement.y *
                     $panzoomTransform.scale +
                     $panzoomTransform.y}px">
                 <div
                     class={cn("absolute flex justify-center items-center")}
                     style="opacity:{$showDrawable
                         ? 1
-                        : 0}; width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
+                        : 0};width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
                     <slot name="drawable" {anchorBox} />
                 </div>
             </div>

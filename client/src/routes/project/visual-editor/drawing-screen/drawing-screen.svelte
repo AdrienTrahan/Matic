@@ -1,22 +1,26 @@
 <!-- @format -->
 <script lang="ts">
+    import { registeredIframes, returnMessage, setSetting } from "$framework/editor-support/connector-redirect"
     import type { PluginLoader } from "$framework/element-loader"
-    import { Bundler, srcdoc } from "$lib/components/utils/bundler"
+    import { Bundler, INJECTED_SRCDOC_SYMBOL, srcdoc } from "$lib/components/utils/bundler"
     import {
         DRAWABLE_SHOWN_CONTEXT_KEY,
         EVENT_INTERCEPTOR_CONTEXT_KEY,
+        IS_TRANSFORMING_CONTEXT_KEY,
+        IS_ZOOMING_CONTEXT_KEY,
         PLUGIN_LOADER_CONTEXT_KEY,
+        SCALE_FACTOR_CONTEXT_KEY,
     } from "$lib/constants"
-    import { registeredIframes, returnMessage } from "$framework/connector-redirect"
     import { clearObjectProperties, serializeObject } from "$lib/utils"
     import { getContext, onMount } from "svelte"
     import { derived, get, type Readable, type Writable } from "svelte/store"
     import uniqid from "uniqid"
     import { getDrawableBundle } from "./drawable-bundle"
 
-    import PointerInject from "$shared/injected/pointer-inject.js?raw"
-    import { handleMessage } from "$framework/connector-redirect"
+    import { handleMessage } from "$framework/editor-support/connector-redirect"
     import type { File } from "$lib/components/utils/bundler"
+    import PointerInject from "$shared/injected/pointer-inject.js?raw"
+    import { getViewTypeSettingCode } from "$framework/editor-support/data-injector"
 
     export let anchorBox: Writable<{ width: number; height: number; top: number; left: number }>
     export let ready: Writable<boolean>
@@ -25,6 +29,9 @@
     let showDrawable: Writable<boolean> = getContext(DRAWABLE_SHOWN_CONTEXT_KEY)
 
     const { loadedPlugins, pluginsStructure, loaded }: PluginLoader = getContext(PLUGIN_LOADER_CONTEXT_KEY)
+    const isZooming: Writable<boolean> = getContext(IS_ZOOMING_CONTEXT_KEY)
+    const isTransforming: Writable<boolean> = getContext(IS_TRANSFORMING_CONTEXT_KEY)
+    const scaleFactor: Writable<number> = getContext(SCALE_FACTOR_CONTEXT_KEY)
 
     let bundle: Readable<File[] | undefined> = derived([loaded], () => {
         if ($loaded) {
@@ -47,6 +54,8 @@
         event.event = clearObjectProperties(event.event)
         sendMessage("pointer", true, event)
     }
+    isTransforming.subscribe(updatePanZoomState)
+    isZooming.subscribe(updatePanZoomState)
 
     anchorBox.subscribe(anchorBoxHasChanged)
     async function anchorBoxHasChanged(newAnchorBox = get(anchorBox)) {
@@ -58,6 +67,13 @@
                 unique: eventId,
             })
         }
+    }
+    function updatePanZoomState() {
+        sendMessage("transform", true, {
+            isTransforming: $isTransforming,
+            isZooming: $isZooming,
+            scaleFactor: $scaleFactor,
+        })
     }
 
     function sendMessage(action: string, functional: boolean = false, message: any) {
@@ -80,6 +96,7 @@
     }
 </script>
 
+<!-- svelte-ignore missing-declaration -->
 {#if $loaded}
     <Bundler
         injectedJS={PointerInject}
@@ -95,6 +112,7 @@
                     handleMessage(receiverType, senderType, unique, key, args, messageId),
                 return: ({ data: { senderType, unique, message }, messageId }) =>
                     returnMessage(senderType, unique, message, messageId),
+                setting: ({ setting, data }) => setSetting(setting, data),
             },
         ]}
         files={$bundle}
@@ -105,7 +123,7 @@
             class="absolute w-full h-full inset-0 z-10 select-none pointer-events-none"
             title="drawable"
             bind:this={iframe}
-            {srcdoc}
-            sandbox={["allow-scripts"].join(" ")} />
+            sandbox={["allow-scripts"].join(" ")}
+            srcdoc={srcdoc.replace(INJECTED_SRCDOC_SYMBOL, getViewTypeSettingCode("drawable"))} />
     </div>
 {/if}

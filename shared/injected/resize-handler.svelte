@@ -15,12 +15,9 @@
     })
 
     async function onResize(anchorBox, unique) {
-        const anchors = document.getElementsByClassName("anchor")
-        for (const anchor of anchors) {
-            top = anchorBox.top
-            left = anchorBox.left
-            display = "unset"
-        }
+        top = anchorBox.top
+        left = anchorBox.left
+        display = "unset"
         await tick()
         parent.postMessage({ action: "resized", data: { unique } }, "*")
     }

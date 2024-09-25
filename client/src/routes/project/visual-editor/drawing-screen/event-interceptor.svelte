@@ -32,6 +32,9 @@
         if (!container) return
         allPointerAndMouseEvents.forEach(eventName => {
             container.addEventListener(eventName, event => {
+                event.mouseEvent = event instanceof MouseEvent
+                event.pointerEvent = event instanceof PointerEvent
+
                 get(eventHandlers).forEach(handler => {
                     handler({ name: eventName, event })
                 })

@@ -24,7 +24,20 @@ export function getDefaultComponentStructure(componentId: string) {
                 },
             ],
         ],
-        plugins: ["BH_0"],
+        plugins: ["BH_0", "BH_1", "BH_2"],
+        breakpoints: [750],
+        boxes: [
+            {
+                x: 0,
+                y: 100,
+                w: 700,
+            },
+            {
+                x: 750,
+                y: 0,
+                w: 500,
+            },
+        ],
         slots: ["children"],
     }
 }

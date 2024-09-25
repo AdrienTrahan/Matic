@@ -2,10 +2,14 @@
 
 import { extractNonce } from "./nonce"
 
+export const INJECTED_SRCDOC_SYMBOL = `/*INJECTED_CODE*/`
+
 const srcdoc: string = `<!DOCTYPE html>
 		<html>
 		<head>
 			<script nonce="${extractNonce()}">
+				${INJECTED_SRCDOC_SYMBOL}
+
 				(function () {
 					function handle_message(ev) {
 						let { action, cmd_id } = ev.data;

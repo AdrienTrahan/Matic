@@ -2,18 +2,14 @@
     import { onMount } from "svelte"
     import { writable } from "svelte/store";
 
-    export const hitboxes = writable([]);
-    export const outlines = writable({});
-
-    let divElement;
-
+    export const hitboxes = writable({});
+    let divElement = null;
     onMount(() => {
         if (!divElement) return
-        hitboxes.set([divElement.getBoundingClientRect()])
-        outlines.set(divElement.getBoundingClientRect())
+        hitboxes.set(divElement.getBoundingClientRect())
     })
     
 </script>
-<div bind:this={divElement} style="background-color: lightgray; width: 100px; height: 100px">
+<div bind:this={divElement} style="background-color: chartreuse; width: 100px; height: 100px; top: 0px; left: 0px;">
     <slot name="0" />
 </div>

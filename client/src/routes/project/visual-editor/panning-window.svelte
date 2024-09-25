@@ -57,7 +57,7 @@
             zoomSpeed: 2,
             maxZoom: 2,
             minZoom: 0.1,
-            initialZoom: 1,
+            initialZoom: initialZoom,
             beforeWheel: event => !event.ctrlKey,
             beforeMouseDown: event => !event.altKey,
             zoomDoubleClickSpeed: 1,
@@ -132,11 +132,10 @@
 <div use:resize={updateAnchorPosition} class="absolute inset-0 overflow-hidden">
     <EventInterceptor on:event={eventHandler}>
         <div bind:this={scrollableContainer} class="absolute inset-0 overflow-visible pointer-events-auto">
-            <div
-                bind:this={scrollableContent}
-                class="absolute inset-0 pointer-events-none flex justify-center items-center">
-                <div class="absolute">
-                    <div class="bg-red-500 w-10 h-10 z-50 absolute"></div>
+            <div bind:this={scrollableContent} class="absolute inset-0 pointer-events-none">
+                <div
+                    class="absolute"
+                    style="left:{displacement.x / initialZoom}px;top:{displacement.y / initialZoom}px;">
                     <slot />
                 </div>
             </div>

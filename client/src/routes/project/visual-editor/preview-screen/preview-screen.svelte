@@ -8,7 +8,7 @@
         returnMessage,
         setSetting,
     } from "$framework/editor-support/connector-redirect"
-    import { getIframeIndexSettingCode, getViewTypeSettingCode } from "$framework/editor-support/data-injector"
+    import { getIframeIndexSettingCode, getPluginTypeSettingCode } from "$framework/editor-support/data-injector"
     import type { ComponentLoader } from "$framework/element-loader"
     import { Bundler, INJECTED_SRCDOC_SYMBOL, srcdoc } from "$lib/components/utils/bundler"
     import { COMPONENT_LOADER_CONTEXT_KEY, MIN_PAGE_HEIGHT } from "$lib/constants"
@@ -83,7 +83,7 @@
                     sandbox={["allow-scripts"].join(" ")}
                     srcdoc={srcdoc.replace(
                         INJECTED_SRCDOC_SYMBOL,
-                        getIframeIndexSettingCode(index) + getViewTypeSettingCode("preview"),
+                        getIframeIndexSettingCode(index) + getPluginTypeSettingCode("preview"),
                     )} />
             </div>
         {/each}

@@ -1,25 +1,19 @@
 <script>
     import Matic from "./Matic"
-    import { fade } from 'svelte/transition';
-
-    let {isZooming, isTransforming, scaleFactor} = Matic;
+    
+    let {scaleFactor, scaledBoxes} = Matic;
 </script>
-{#if !$isTransforming}
-    <div in:fade={{ duration: 200 }} class="knob">
+{#each $scaledBoxes as {x,y,w}}
+    <div class="knob" style="left:{x}px;top:{y}px;width:{w}px">
         <p>Desktop</p>
     </div>
-{/if}
-
-
+{/each}
 <style>
     .knob {
         position: absolute;
-        top: -8px;
-        left: 0px;
         height: 28px;
-        width: 200px;
         background-color: var(--tw-zinc-200);
-        transform: translateY(-100%);
+        transform: translateY(calc(-8px - 100%));
         border-radius: 6px;
         display: flex;
         align-items: center;

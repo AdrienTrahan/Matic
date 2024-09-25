@@ -1,11 +1,11 @@
 import { getContext, setContext } from "svelte";
-import { writable, get } from "svelte/store"
+import { writable, get, derived } from "svelte/store"
 let type;
 let plugins;
 let id = 0;
 let readyHandlers = [];
 
-const viewType = window.Matic.viewType;
+const pluginType = window.Matic.pluginType;
 const iframeIndex = window.Matic.iframeIndex;
 
 if (!window?.Matic?.handleMessage) {
@@ -59,6 +59,8 @@ function handleAlert(type, data) {
         case "ready":
             setIsPluginMounted();
             break;
+        case "boxesChanged":
+            updateBoxes(data)
     }
 }
 
@@ -155,6 +157,22 @@ function setHeight(index) {
     })
 }
 
+function updateBoxes(newBoxes) {
+    Matic.boxes.update((currentBoxes) => {
+        if (currentBoxes.length != newBoxes.length) {
+            currentBoxes = newBoxes
+        } else {
+            for (const [i, box] of currentBoxes.entries()) {
+                if (box.x != newBoxes[i].x) box.x = newBoxes[i].x
+                if (box.y != newBoxes[i].y) box.y = newBoxes[i].y
+                if (box.w != newBoxes[i].w) box.w = newBoxes[i].w
+                if (box.h != newBoxes[i].h) box.h = newBoxes[i].h
+            }
+        }
+        return currentBoxes;
+    })
+}
+
 Matic.init = async function (newPlugins, newType) {
     if (plugins != undefined && type != undefined) return;
     delete Matic.init;
@@ -173,6 +191,8 @@ Matic.ACTIVE_PLUGIN_CONTEXT_KEY = "ACTIVE_PLUGIN";
 Matic.isZooming = writable(false)
 Matic.isTransforming = writable(false)
 Matic.scaleFactor = writable(1.0);
+Matic.boxes = writable([]);
+Matic.scaledBoxes = derived([Matic.boxes, Matic.scaleFactor], ([boxes, scaleFactor]) => boxes.map(({ x, y, w, h }) => ({ x: x * scaleFactor, y: y * scaleFactor, w: w * scaleFactor, h: h * scaleFactor })));
 
 
 Matic.getBreakpoint = () => {

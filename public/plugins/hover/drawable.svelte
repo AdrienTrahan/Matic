@@ -2,9 +2,8 @@
     import { onMount } from "svelte"
     import { writable } from "svelte/store"
     import Matic from "./Matic"
-    import { fade } from 'svelte/transition';
 
-    let {isZooming, isTransforming, scaleFactor} = Matic;
+    let {scaleFactor} = Matic;
     function mouseMoved(event){
         
     }
@@ -20,12 +19,9 @@
         width: 100, 
         height: 100
     })
-
     
 </script>
-{#if !$isTransforming}
-    <div in:fade={{ duration: 200 }} class="outline" style="top:{$outline.top * $scaleFactor}px;left:{$outline.left * $scaleFactor}px;width:{$outline.width * $scaleFactor}px;height:{$outline.height * $scaleFactor}px;"></div>
-{/if}
+<div class="outline" style="top:{$outline.top * $scaleFactor}px;left:{$outline.left * $scaleFactor}px;width:{$outline.width * $scaleFactor}px;height:{$outline.height * $scaleFactor}px;"></div>
 <style>
     .outline {
         position: absolute;

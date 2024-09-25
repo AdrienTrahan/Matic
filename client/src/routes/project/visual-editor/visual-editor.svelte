@@ -6,7 +6,7 @@
     import { cn } from "$lib/utils"
     import { getContext, onMount } from "svelte"
     import { resize } from "svelte-resize-observer-action"
-    import { derived, writable } from "svelte/store"
+    import { writable } from "svelte/store"
     import DrawingScreen from "./drawing-screen/drawing-screen.svelte"
     import PanningWindow from "./panning-window.svelte"
     import PreviewScreen from "./preview-screen/preview-screen.svelte"
@@ -32,7 +32,7 @@
 <div class={cn("transition-opacity inset-0 absolute", ready ? "opacity-100" : "opacity-0")}>
     <PanningWindow
         displacement={{ x: displacement.x + displacement.width / 2, y: displacement.y + displacement.height / 2 }}
-        {initialZoom}>
+        initialZoom={1}>
         <div use:resize={updateDisplacement}>
             {#if componentLoader.main}
                 <PreviewScreen ready={previewReady} />

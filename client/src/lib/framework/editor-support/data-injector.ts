@@ -1,9 +1,9 @@
 /** @format */
 
-export function getViewTypeSettingCode(viewType: string) {
+export function getPluginTypeSettingCode(pluginType: string) {
     return `
         if (!window.Matic) window.Matic = {};
-        window.Matic.viewType = "${viewType}";
+        window.Matic.pluginType = "${pluginType}";
     `
 }
 

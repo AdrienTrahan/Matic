@@ -21,6 +21,10 @@ export let boxes: Writable<
     }[]
 > = writable([])
 
+boxes.subscribe(currentBoxes => {
+    sendAlert("*", "boxesChanged", currentBoxes)
+})
+
 export function handleMessage(receiverType, senderType, unique, key, args, messageId) {
     const selectedIframes = registeredIframes[receiverType]
     if (selectedIframes) {

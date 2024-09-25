@@ -1,9 +1,19 @@
 <!-- @format -->
 <script>
-    import { tick, onMount } from "svelte"
+    import { onMount, tick } from "svelte"
+    import { writable } from "svelte/store"
+    import Matic from "./Matic"
 
-    let top = 0
-    let left = 0
+    const { scaleFactor, boxes } = Matic
+    let anchorBox = writable({
+        top: 0,
+        left: 0,
+    })
+    let origin = {
+        top: 0,
+        left: 0,
+    }
+
     let display = "none"
     onMount(() => {
         let handler = ({ data: messageData }) => {
@@ -13,16 +23,25 @@
         window.addEventListener("message", handler)
         return () => window.removeEventListener("message", handler)
     })
-
-    async function onResize(anchorBox, unique) {
-        top = anchorBox.top
-        left = anchorBox.left
+    $: {
+        origin.top = $anchorBox.top - (($boxes[0]?.y ?? 0) + ($boxes[0]?.h ?? 0) / 2) * $scaleFactor
+        origin.left = $anchorBox.left - (($boxes[0]?.x ?? 0) + ($boxes[0]?.w ?? 0) / 2) * $scaleFactor
+    }
+    async function onResize(newAnchorBox, unique) {
+        anchorBox.set(newAnchorBox)
         display = "unset"
         await tick()
         parent.postMessage({ action: "resized", data: { unique } }, "*")
     }
 </script>
 
-<div class="anchor" style="position:fixed;left:{left}px;top:{top}px;display:{display};">
+<div class="anchor" style="position:fixed;left:{origin.left}px;top:{origin.top}px;display:{display};">
+    {#each $boxes as { x, y, w, h }}
+        <div
+            class="sub-anchor"
+            style="position:absolute;left:{x * $scaleFactor}px;top:{y * $scaleFactor}px;width:{w *
+                $scaleFactor}px;height:{h * $scaleFactor}px;display:{display};">
+        </div>
+    {/each}
     <slot />
 </div>

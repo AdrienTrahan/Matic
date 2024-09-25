@@ -1,6 +1,6 @@
 <!-- @format -->
 <script lang="ts">
-    import { registeredIframes, returnMessage, setSetting } from "$framework/editor-support/connector-redirect"
+    import { boxes, registeredIframes, returnMessage, setSetting } from "$framework/editor-support/connector-redirect"
     import type { PluginLoader } from "$framework/element-loader"
     import { Bundler, INJECTED_SRCDOC_SYMBOL, srcdoc } from "$lib/components/utils/bundler"
     import {
@@ -18,9 +18,9 @@
     import { getDrawableBundle } from "./drawable-bundle"
 
     import { handleMessage } from "$framework/editor-support/connector-redirect"
+    import { getPluginTypeSettingCode } from "$framework/editor-support/data-injector"
     import type { File } from "$lib/components/utils/bundler"
     import PointerInject from "$shared/injected/pointer-inject.js?raw"
-    import { getViewTypeSettingCode } from "$framework/editor-support/data-injector"
 
     export let anchorBox: Writable<{ width: number; height: number; top: number; left: number }>
     export let ready: Writable<boolean>
@@ -43,6 +43,7 @@
 
     onMount(() => {
         $events.add(onEventHandler)
+
         return () => {
             $events.delete(onEventHandler)
         }
@@ -65,9 +66,11 @@
             sendMessage("resize", true, {
                 anchorBox: newAnchorBox,
                 unique: eventId,
+                boxes: $boxes,
             })
         }
     }
+
     function updatePanZoomState() {
         sendMessage("transform", true, {
             isTransforming: $isTransforming,
@@ -117,13 +120,14 @@
         ]}
         files={$bundle}
         theme="light" />
-    <div class="absolute inset-0">
+    <div class="absolute inset-0 transition-all duration-200" style="opacity:{$isTransforming ? 0 : 1};">
         <iframe
             allowtransparency={true}
             class="absolute w-full h-full inset-0 z-10 select-none pointer-events-none"
             title="drawable"
             bind:this={iframe}
+            style="display:{$isTransforming ? 'none' : 'block'};"
             sandbox={["allow-scripts"].join(" ")}
-            srcdoc={srcdoc.replace(INJECTED_SRCDOC_SYMBOL, getViewTypeSettingCode("drawable"))} />
+            srcdoc={srcdoc.replace(INJECTED_SRCDOC_SYMBOL, getPluginTypeSettingCode("drawable"))} />
     </div>
 {/if}

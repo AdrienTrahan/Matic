@@ -1,6 +1,5 @@
 <!-- @format -->
 <script lang="ts">
-    import type { Component } from "$framework/component"
     import type { ComponentLoader } from "$framework/element-loader"
     import { hoveredElement } from "$framework/selector"
     import { COMPONENT_LOADER_CONTEXT_KEY, FALLBACK_LAYER_NAME } from "$lib/constants"
@@ -40,14 +39,18 @@
         <p class="select-none">{layer.name ?? FALLBACK_LAYER_NAME}</p>
     </div>
     {#if !collapsed}
-        <div class="ml-2">
+        <div class="ml-4 mb-2">
             {#each $componentData.slots as _, index}
-                {#if $componentData.slots.length > 1}
-                    <h4 class="text-xs ml-4">{$componentData.slots[index]}</h4>
-                {/if}
-                {#each slots[index] ?? [] as childLayer}
-                    <svelte:self layer={childLayer} />
-                {/each}
+                <div class="-mb-3 -mt-1">
+                    {#if $componentData.slots.length > 1}
+                        <h4 class="text-xs text-zinc-400 ml-9 -my-1 cursor-default select-none">
+                            {$componentData.slots[index]}
+                        </h4>
+                    {/if}
+                    {#each slots[index] ?? [] as childLayer}
+                        <svelte:self layer={childLayer} />
+                    {/each}
+                </div>
             {/each}
         </div>
     {/if}

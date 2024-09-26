@@ -32,7 +32,7 @@
 <div class={cn("transition-opacity inset-0 absolute", ready ? "opacity-100" : "opacity-0")}>
     <PanningWindow
         displacement={{ x: displacement.x + displacement.width / 2, y: displacement.y + displacement.height / 2 }}
-        initialZoom={1}>
+        {initialZoom}>
         <div use:resize={updateDisplacement}>
             {#if componentLoader.main}
                 <PreviewScreen ready={previewReady} />

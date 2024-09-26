@@ -2,7 +2,7 @@
 
 import { getProjectDocumentId, PROJECT_COLLECTION } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
-import { writable, type Writable } from "svelte/store"
+import { get, writable, type Writable } from "svelte/store"
 import { authFetch, formUrlEncode } from "./networking"
 import { Connector } from "./socket/connection"
 
@@ -76,5 +76,9 @@ export class Project {
             },
             body: formUrlEncode({ name, projectId: this.id }),
         })
+    }
+
+    get library() {
+        return get(this.data).library
     }
 }

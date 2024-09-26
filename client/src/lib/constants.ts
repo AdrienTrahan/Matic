@@ -15,9 +15,8 @@ export const FALLBACK_LAYER_NAME = "Frame"
 
 export const DRAWABLE_EXTRA_PADDING_FACTOR = 1.0
 export const WHEEL_UPDATE_DELAY = 150
-export const DOUBLE_CLICK_BLOCK_DELAY = 800
 export const ZOOM_UPDATE_DELAY = 150
 
 export const MIN_PAGE_HEIGHT = 300
 
-export const INITIAL_ZOOM = 0.8
+export const INITIAL_ZOOM = 1.5

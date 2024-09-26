@@ -10,9 +10,9 @@
     })
     
 </script>
-<div bind:this={divElement} style="background-color: chartreuse; width: 100px; height: 100px; top: 0px; left: 0px;">
-    <slot name="0" />
-</div>
-<div bind:this={divElement} style="background-color: blue; width: 100px; height: 100px; top: 0px; left: 0px;">
-    <slot name="1" />
-</div>
+<h1>text</h1>
+<style>
+    h1{
+        margin: 0px;
+    }
+</style>

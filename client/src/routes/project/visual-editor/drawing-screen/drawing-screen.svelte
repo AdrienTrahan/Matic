@@ -1,6 +1,6 @@
 <!-- @format -->
 <script lang="ts">
-    import { boxes, registeredIframes, returnMessage, setSetting } from "$framework/editor-support/connector-redirect"
+    import { registeredIframes, returnMessage, setAlert } from "$framework/editor-support/connector-redirect"
     import type { PluginLoader } from "$framework/element-loader"
     import { Bundler, INJECTED_SRCDOC_SYMBOL, srcdoc } from "$lib/components/utils/bundler"
     import {
@@ -43,7 +43,6 @@
 
     onMount(() => {
         $events.add(onEventHandler)
-
         return () => {
             $events.delete(onEventHandler)
         }
@@ -66,7 +65,6 @@
             sendMessage("resize", true, {
                 anchorBox: newAnchorBox,
                 unique: eventId,
-                boxes: $boxes,
             })
         }
     }
@@ -108,14 +106,28 @@
             {
                 load: () => {
                     ready.set(true)
+                    updatePanZoomState()
                     anchorBoxHasChanged()
                 },
                 resized: iframeHasResized,
-                call: ({ data: { receiverType, senderType, unique, key, args }, messageId }) =>
-                    handleMessage(receiverType, senderType, unique, key, args, messageId),
-                return: ({ data: { senderType, unique, message }, messageId }) =>
-                    returnMessage(senderType, unique, message, messageId),
-                setting: ({ setting, data }) => setSetting(setting, data),
+                call: ({
+                    data: { receiverType, senderType, senderIndex, receiverIndex, pluginId, componentId, key, args },
+                    messageId,
+                }) =>
+                    handleMessage(
+                        receiverType,
+                        senderType,
+                        senderIndex,
+                        receiverIndex,
+                        pluginId,
+                        componentId,
+                        key,
+                        args,
+                        messageId,
+                    ),
+                return: ({ data: { senderType, senderIndex, pluginId, componentId, message }, messageId }) =>
+                    returnMessage(senderType, senderIndex, pluginId, componentId, message, messageId),
+                alert: ({ alert, data }) => setAlert(alert, data),
             },
         ]}
         files={$bundle}

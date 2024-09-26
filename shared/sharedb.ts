@@ -45,16 +45,22 @@ export function generateSvelteElementClosing(id: string) {
     return `</${renameElementId(id)}>`
 }
 
-export function generateSvelteDrawablePluginTag(id: string, unique: string) {
-    return contextInject(unique, `<${renameElementId(id)} bind:this={plugins["${unique}"]} />`)
+export function generateSvelteDrawablePluginTag(pluginId: string) {
+    return contextInject(pluginId, "0", `<${renameElementId(pluginId)} bind:this={plugins["${pluginId}"]["0"]} />`)
 }
 
-export function contextInject(unique: string, content: string) {
-    return `<ContextInjector unique="${unique}">${content}</ContextInjector>`
+export function contextInject(pluginId: string, componentInstanceId: string, content: string) {
+    return `<ContextInjector pluginId="${pluginId}" componentId="${componentInstanceId}">${content}</ContextInjector>`
 }
 
-export function generateSveltePreviewPluginTag(id: string, unique: string) {
-    return contextInject(unique, `<${renameElementId(id)} bind:this={plugins["${unique}"]} {components} />`)
+export function generateSveltePreviewPluginTag(pluginId: string, componentInstanceId: string) {
+    return contextInject(
+        pluginId,
+        componentInstanceId,
+        `<${renameElementId(
+            pluginId
+        )} componentId="${componentInstanceId}" bind:this={plugins["${pluginId}"]["${componentInstanceId}"]} {components} />`
+    )
 }
 
 export function generateSvelteFragmentSlotOpening(index: number) {

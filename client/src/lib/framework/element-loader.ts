@@ -10,14 +10,18 @@ import { get, writable, type Writable } from "svelte/store"
 import { TreeComponentCodeLoader } from "./code-loader"
 import { Component, type ParentComponent } from "./component"
 import { Plugin } from "./plugin"
+import uniqid from "uniqid"
 
 export class ComponentLoader {
     loadedComponents: { [key: string]: Component } = {}
 
+    constructor(loadableComponents) {}
+
     main: Writable<ParentComponent | undefined> = writable()
-    registerComponent(component: ParentComponent) {
+    registerMainComponent(component: ParentComponent) {
         this.main.set(component)
     }
+
     loadElement(component: Component) {
         if (this.loadedComponents[component.id] === undefined) this.loadedComponents[component.id] = component
         return this.loadedComponents[component.id]
@@ -46,6 +50,7 @@ export class PluginLoader {
             parentComponent,
             ...componentsId.map(componentId => componentLoader.loadedComponents[componentId]),
         ]
+
         const loadedComponentsObj = { [parentComponent.id]: parentComponent }
         Object.assign(loadedComponentsObj, componentLoader.loadedComponents)
 
@@ -80,21 +85,27 @@ export class PluginLoader {
     }
 
     generatePreviewPlugins() {
+        const expectedPluginsObject = Object.fromEntries(
+            Object.entries(get(this.pluginsStructure)).map(([pluginId, componentInstancesIds]) => [
+                pluginId,
+                Object.fromEntries(componentInstancesIds.map(componentInstancesId => [componentInstancesId, null])),
+            ])
+        )
+
         return `
             <script>
                 import Matic from "./Matic";
                 import ContextInjector from "./ContextInjector.svelte"
                 import { onMount } from "svelte";
                 export let components;
-                const plugins = {};
+                const plugins = ${JSON.stringify(expectedPluginsObject)};
                 let loaded = false;
-                $: if (components != undefined) initConnector();
                 $: if (components) loaded = true;
-
+                $: if (Object.values(plugins).every(componentInstance => Object.values(componentInstance).every(plugin => plugin != null))) initConnector();
                 async function initConnector(){
                     await Matic.init(plugins, "preview");
                 }
-
+                
                 ${getPluginImportsCode(get(this.loadedPlugins), "preview")}
             </script>
             {#if loaded}
@@ -137,8 +148,8 @@ function getHTMLPreviewPluginsTags(
     let tags = ``
     for (const [pluginId, uniques] of Object.entries(pluginsStructure)) {
         if (loadedPlugins[pluginId]?.codeLoader?.getCode().preview === undefined) continue
-        for (const unique of uniques) {
-            tags += `${generateSveltePreviewPluginTag(pluginId, unique)}`
+        for (const componentInstanceId of uniques) {
+            tags += `${generateSveltePreviewPluginTag(pluginId, componentInstanceId)}`
         }
     }
     return tags

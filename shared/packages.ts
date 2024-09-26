@@ -10,6 +10,13 @@ export const Components = {
         slots: ["children"],
         plugins: [],
     },
+    IH_1: {
+        type: ComponentTypes.FILE,
+        file: "/text.svelte",
+        name: "Text",
+        slots: ["children"],
+        plugins: [],
+    },
 }
 
 export const Plugins = {
@@ -20,9 +27,5 @@ export const Plugins = {
     BH_1: {
         drawable: "/page-knob/drawable.svelte",
         preview: "/page-knob/preview.svelte",
-    },
-    BH_2: {
-        drawable: "/viewport-manager/drawable.svelte",
-        preview: "/viewport-manager/preview.svelte",
     },
 }

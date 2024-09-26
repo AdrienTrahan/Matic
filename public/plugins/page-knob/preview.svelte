@@ -3,5 +3,4 @@
     const matic = Matic();
     
     export let components;
-
 </script>

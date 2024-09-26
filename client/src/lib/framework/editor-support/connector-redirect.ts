@@ -1,16 +1,16 @@
 /** @format */
 
-import { writable, type Writable } from "svelte/store"
+import { get, writable, type Writable } from "svelte/store"
 
-export let pluginsReady = {
+export let pluginsReady: {
+    drawable: boolean
+    preview: { [index: string]: boolean }
+} = {
     drawable: false,
-    preview: false,
+    preview: {},
 }
 
-export let registeredIframes: { [message: string]: HTMLIFrameElement[] | null } = {
-    drawable: null,
-    preview: null,
-}
+export let registeredIframes: { [message: string]: HTMLIFrameElement[] | null } = {}
 
 export let boxes: Writable<
     {
@@ -21,20 +21,46 @@ export let boxes: Writable<
     }[]
 > = writable([])
 
-boxes.subscribe(currentBoxes => {
-    sendAlert("*", "boxesChanged", currentBoxes)
-})
+export let componentTree: Writable<any> = writable({})
 
-export function handleMessage(receiverType, senderType, unique, key, args, messageId) {
+const selections = writable(new Set())
+
+boxes.subscribe(updateBoxes)
+
+componentTree.subscribe(updateComponentTree)
+
+function updateBoxes(currentBoxes = get(boxes)) {
+    sendAlert("*", "boxesChanged", currentBoxes)
+}
+
+function updateComponentTree(currentComponentTree = get(componentTree)) {
+    sendAlert("*", "componentTreeChanged", currentComponentTree)
+}
+
+export function handleMessage(
+    receiverType,
+    senderType,
+    senderIndex,
+    receiverIndex,
+    pluginId,
+    componentId,
+    key,
+    args,
+    messageId
+) {
     const selectedIframes = registeredIframes[receiverType]
+
     if (selectedIframes) {
-        for (const iframe of selectedIframes) {
+        const iframes = selectedIframes.filter((_, i) => receiverIndex == "*" || i == receiverIndex)
+        for (const iframe of iframes) {
             iframe.contentWindow?.postMessage(
                 {
                     action: "call",
                     data: {
                         type: senderType,
-                        unique,
+                        senderIndex,
+                        pluginId,
+                        componentId,
                         key,
                         args,
                     },
@@ -43,43 +69,52 @@ export function handleMessage(receiverType, senderType, unique, key, args, messa
                 "*"
             )
         }
+        if (iframes.length > 0) return
     }
+    returnMessage(senderType, senderIndex, pluginId, componentId, undefined, messageId)
 }
 
-export function returnMessage(senderType, unique, message, messageId) {
+export function returnMessage(senderType, senderIndex, pluginId, componentId, message, messageId) {
     const selectedIframes = registeredIframes[senderType]
-    if (selectedIframes) {
-        for (const iframe of selectedIframes) {
-            iframe.contentWindow?.postMessage(
-                {
-                    action: "return",
-                    data: {
-                        type: senderType,
-                        unique,
-                        message,
-                    },
-                    messageId,
+    if (selectedIframes && selectedIframes[senderIndex ?? 0]) {
+        selectedIframes[senderIndex ?? 0].contentWindow?.postMessage(
+            {
+                action: "return",
+                data: {
+                    type: senderType,
+                    pluginId,
+                    componentId,
+                    message,
                 },
-                "*"
-            )
-        }
+                messageId,
+            },
+            "*"
+        )
     }
 }
 
-export function setSetting(type, data) {
+export function setAlert(type, data) {
     switch (type) {
         case "ready":
-            setIsReady(data.type)
+            setIsReady(data.type, data.index)
             break
         case "height-changed":
             setHeight(data.iframe, data.height)
             break
+        case "selection":
+            setSelections(data.selections)
+            break
     }
 }
 
-function setIsReady(type) {
-    pluginsReady[type] = true
-    if (pluginsReady.drawable && pluginsReady.preview) {
+function setIsReady(type, index) {
+    if (type == "drawable") {
+        pluginsReady[type] = true
+    } else {
+        pluginsReady[type][index] = true
+    }
+    if (pluginsReady.drawable && get(boxes).every((_, i) => pluginsReady.preview[i])) {
+        setupImportantData()
         sendAlert("*", "ready", {})
     }
 }
@@ -89,6 +124,10 @@ function setHeight(iframe, height) {
         currentBoxes[iframe].h = height
         return currentBoxes
     })
+}
+
+function setSelections(newSelections) {
+    selections.set(newSelections)
 }
 
 function sendAlert(type, action, data) {
@@ -108,4 +147,22 @@ function sendAlert(type, action, data) {
             "*"
         )
     }
+}
+
+export function resetConnections() {
+    pluginsReady = {
+        drawable: false,
+        preview: {},
+    }
+    registeredIframes = {
+        drawable: null,
+        preview: null,
+    }
+    boxes.set([])
+    componentTree.set({})
+}
+
+function setupImportantData() {
+    updateBoxes()
+    updateComponentTree()
 }

@@ -8,6 +8,8 @@ let readyHandlers = [];
 const pluginType = window.Matic.pluginType;
 const iframeIndex = window.Matic.iframeIndex;
 
+const selections = writable(new Set());
+
 if (!window?.Matic?.handleMessage) {
     window.addEventListener("message", handleMessage);
     if (typeof window.Matic != "object") window.Matic = {};
@@ -30,11 +32,18 @@ async function handleMessage({ data: { action, data, messageId } }) {
     }
 }
 
-async function handleCall({ type: senderType, unique, key, args }, messageId) {
+async function handleCall({ type: senderType, senderIndex, pluginId, componentId, key, args }, messageId) {
     let responseMessage;
-    const pluginInstance = plugins[unique];
+    let pluginInstances = [];
 
-    if (pluginInstance) {
+    if (pluginType == "drawable") {
+        pluginInstances = plugins[pluginId]["0"];
+    } else if (componentId == "*") {
+        pluginInstances = Object.values(plugins[pluginId]);
+    } else {
+        pluginInstances = plugins[pluginId][componentId] ? [plugins[pluginId][componentId]] : []
+    }
+    for (const pluginInstance of pluginInstances) {
         const method = pluginInstance[key];
         if (typeof method == "function") {
             try {
@@ -42,14 +51,14 @@ async function handleCall({ type: senderType, unique, key, args }, messageId) {
             } catch { }
         }
     }
-    returnMessage(unique, senderType, responseMessage, messageId);
+    returnMessage(pluginId, componentId, senderType, senderIndex, responseMessage, messageId);
 }
 
-function handleReturn({ message, unique }, messageId) {
+function handleReturn({ message, pluginId, componentId }, messageId) {
     if (typeof window.Matic.sentMessages === "object" &&
-        window.Matic.sentMessages[unique] !== undefined &&
-        typeof window.Matic.sentMessages[unique][messageId] === "function") {
-        const resolveFunction = window.Matic.sentMessages[unique][messageId];
+        window.Matic.sentMessages[`${pluginId}-${componentId}`] !== undefined &&
+        typeof window.Matic.sentMessages[`${pluginId}-${componentId}`][messageId] === "function") {
+        const resolveFunction = window.Matic.sentMessages[`${pluginId}-${componentId}`][messageId];
         resolveFunction(message);
     }
 }
@@ -61,23 +70,35 @@ function handleAlert(type, data) {
             break;
         case "boxesChanged":
             updateBoxes(data)
+            break;
+        case "componentTreeChanged":
+            updateComponentTree(data)
+            break;
+        case "selection":
+            updateSelections(data);
+            break;
     }
 }
 
-async function sendMessage(unique, receiverType, key, args) {
+async function sendMessage(pluginId, componentId, receiverType, key, args, receiverIndex = "*") {
     const currentMessageId = id++;
+
     const returnPromise = new Promise((resolve) => {
-        if (typeof window.Matic.sentMessages[unique] !== "object") window.Matic.sentMessages[unique] = {};
-        window.Matic.sentMessages[unique][currentMessageId] = resolve;
+        if (typeof window.Matic.sentMessages[`${pluginId}-${componentId}`] !== "object") window.Matic.sentMessages[`${pluginId}-${componentId}`] = {};
+        window.Matic.sentMessages[`${pluginId}-${componentId}`][currentMessageId] = resolve;
     });
+
     parent.postMessage({
         action: "call",
         data: {
             receiverType,
             senderType: type,
-            unique,
+            senderIndex: iframeIndex,
+            pluginId,
+            componentId,
             key,
-            args
+            args,
+            receiverIndex
         },
         messageId: currentMessageId
     }, "*")
@@ -86,31 +107,39 @@ async function sendMessage(unique, receiverType, key, args) {
 }
 
 
-function returnMessage(unique, type, message, messageId) {
+function returnMessage(pluginId, componentId, senderType, senderIndex, message, messageId) {
     parent.postMessage({
         action: "return",
         data: {
-            senderType: type,
-            unique,
+            senderType,
+            senderIndex,
+            pluginId,
+            componentId,
             message
         },
         messageId: messageId
     }, "*")
 }
 
-function sendSetting(setting, data) {
-    parent.postMessage({ action: "setting", setting, data }, "*")
+function sendAlert(alert, data) {
+    parent.postMessage({ action: "alert", alert, data }, "*")
 }
 
 
 const sendMessageProxyHandler = {
     get: (target, key) => {
-        return (...args) => {
-            return sendMessage(target.unique, target.type, key, args)
-        };
+        if (target.type == "drawable") return (...args) => sendMessage(target.pluginId, target.componentId, target.type, key, args);
+        if (target.type == "preview") {
+            const destination = target.dest;
+            delete target.dest;
+            return (...args) => sendMessage(target.pluginId, target.comp, target.type, key, args, destination);
+        }
     },
-    set: () => {
-        throw new Error('Cannot write on read-only proxy')
+    set: (target, key, value) => {
+        if (key != "dest" && key != "comp") throw new Error('Cannot write on read-only proxy')
+        if (key == "dest") target.dest = value;
+        if (key == "comp") target.comp = value;
+        return target;
     },
     deleteProperty: () => {
         throw new Error('Cannot delete on read-only proxy')
@@ -118,40 +147,48 @@ const sendMessageProxyHandler = {
 }
 
 class Connection {
-    #unique;
+    #pluginId;
+    #componentId;
     #drawableProxy;
     #previewProxy;
 
-    constructor(unique) {
-        this.#unique = unique;
-        this.#drawableProxy = new Proxy({ type: "drawable", unique: this.#unique }, sendMessageProxyHandler);
-        this.#previewProxy = new Proxy({ type: "preview", unique: this.#unique }, sendMessageProxyHandler);
+    constructor(pluginId, componentId) {
+        this.#pluginId = pluginId;
+        this.#componentId = componentId;
+        this.#drawableProxy = new Proxy({ type: "drawable", pluginId: this.#pluginId, componentId: this.#componentId }, sendMessageProxyHandler);
+        this.#previewProxy = new Proxy({ type: "preview", pluginId: this.#pluginId, componentId: this.#componentId }, sendMessageProxyHandler);
     }
-    get drawable() {
+    drawable() {
         return this.#drawableProxy;
     }
-    get preview() {
+    preview(componentId, destinationIndex) {
+        if (destinationIndex === undefined) destinationIndex = "*";
+        if (typeof componentId !== "string") componentId = "*";
+        this.#previewProxy.comp = componentId
+        this.#previewProxy.dest = destinationIndex;
         return this.#previewProxy;
     }
 }
 
-
 export default function Matic() {
     try {
-        const unique = getContext(Matic.ACTIVE_PLUGIN_CONTEXT_KEY);
-        setContext(Matic.ACTIVE_PLUGIN_CONTEXT_KEY, undefined);
-        return new Connection(unique);
+        const pluginId = getContext(Matic.ACTIVE_PLUGIN_ID_CONTEXT_KEY);
+        setContext(Matic.ACTIVE_PLUGIN_ID_CONTEXT_KEY, undefined);
+
+        const componentInstanceId = getContext(Matic.ACTIVE_COMPONENT_INSTANCE_ID_CONTEXT_KEY);
+        setContext(Matic.ACTIVE_COMPONENT_INSTANCE_ID_CONTEXT_KEY, undefined);
+        return new Connection(pluginId, componentInstanceId);
     } catch { }
     throw "Matic must be initialized at the top level of a Plugin"
 }
 
 async function setIsReady() {
     if (iframeIndex !== undefined) setHeight(iframeIndex);
-    sendSetting("ready", { type })
+    sendAlert("ready", { type, index: iframeIndex })
 }
 
 function setHeight(index) {
-    sendSetting("height-changed", {
+    sendAlert("height-changed", {
         iframe: index,
         height: document.documentElement.scrollHeight
     })
@@ -173,12 +210,19 @@ function updateBoxes(newBoxes) {
     })
 }
 
+function updateComponentTree(newComponentTree) {
+    Matic.componentTree.set(newComponentTree);
+}
+
+function updateSelections(newSelections) {
+    console.log(newSelections);
+}
+
 Matic.init = async function (newPlugins, newType) {
     if (plugins != undefined && type != undefined) return;
     delete Matic.init;
     plugins = newPlugins;
     type = newType
-
     setIsReady();
 }
 
@@ -186,14 +230,20 @@ Matic.onReady = function (callback) {
     readyHandlers.push(callback);
 }
 
-Matic.ACTIVE_PLUGIN_CONTEXT_KEY = "ACTIVE_PLUGIN";
+Matic.ACTIVE_PLUGIN_ID_CONTEXT_KEY = "ACTIVE_PLUGIN_ID";
+Matic.ACTIVE_COMPONENT_INSTANCE_ID_CONTEXT_KEY = "ACTIVE_COMPONENT_INSTANCE_ID"
 
 Matic.isZooming = writable(false)
 Matic.isTransforming = writable(false)
 Matic.scaleFactor = writable(1.0);
 Matic.boxes = writable([]);
 Matic.scaledBoxes = derived([Matic.boxes, Matic.scaleFactor], ([boxes, scaleFactor]) => boxes.map(({ x, y, w, h }) => ({ x: x * scaleFactor, y: y * scaleFactor, w: w * scaleFactor, h: h * scaleFactor })));
+Matic.componentTree = writable({});
 
+
+Matic.selectComponent = function (uniqueId) {
+    if ($selections.has(uniqueId)) selections.update(currentSelections => currentSelections.add(uniqueId));
+}
 
 Matic.getBreakpoint = () => {
     return iframeIndex;

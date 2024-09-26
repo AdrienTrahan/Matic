@@ -9,11 +9,15 @@ export async function load({ url, fetch }) {
     if (!params.get("id")) throw redirect(307, "/projects")
     const id = parseInt(params.get("id")!).toString()
 
-    const componentLoader = new ComponentLoader()
-    const pluginLoader = new PluginLoader()
     const project = await Project.init(id)
 
+    const componentLoader = new ComponentLoader(Object.keys(project.library))
+    const pluginLoader = new PluginLoader()
+
     const [_, error] = await project.loadGeneralProjectData(fetch)
+
+    console.log(Object.keys(project.library))
+
     if (error) throw redirect(307, "/projects")
 
     return {

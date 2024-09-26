@@ -90,10 +90,9 @@ export class TreeComponentCodeLoader extends ComponentCodeLoader {
 
     async loadImports() {
         this.imports.set(Array.from(findSvelteImports(this.element.doc!.data.children)))
-
-        for (const componentId of get(this.imports)) {
-            await Component.init(componentId, (this.element as Component).componentLoader, this.element.connection!)
-        }
+        // for (const componentId of get(this.imports)) {
+        //     await Component.init(componentId, (this.element as Component).componentLoader, this.element.connection!)
+        // }
     }
 
     generateSvelteDOM() {

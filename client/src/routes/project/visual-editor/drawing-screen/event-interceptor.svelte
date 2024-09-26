@@ -24,6 +24,7 @@
         "dblclick",
         "mousedown",
         "mouseup",
+        "mouseleave",
         "mousemove",
         "contextmenu",
     ]

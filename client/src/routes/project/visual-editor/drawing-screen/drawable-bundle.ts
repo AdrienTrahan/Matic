@@ -10,6 +10,9 @@ import EditorStyle from "$shared/injected/editor-style.svelte?raw"
 import { generateSvelteDrawablePluginTag } from "$shared/sharedb"
 
 export function getDrawableBundle(loadedPlugins, pluginsStructure) {
+    const expectedPluginsObject = Object.fromEntries(
+        Object.keys(pluginsStructure).map(pluginId => [pluginId, { 0: null }])
+    )
     return [
         {
             name: "App",
@@ -24,7 +27,7 @@ export function getDrawableBundle(loadedPlugins, pluginsStructure) {
                     import ContextInjector from "./ContextInjector.svelte";
                     import { onMount } from "svelte";
                     import ResizeHandler from "./ResizeHandler.svelte"
-                    const plugins = {};
+                    const plugins = ${JSON.stringify(expectedPluginsObject)};
                     ${getPluginImportsCode(loadedPlugins, "drawable")}
                     onMount(() => {
                         parent.postMessage({ action: 'load' }, '*');
@@ -78,11 +81,9 @@ function getHTMLDrawablePluginsTags(
 ) {
     let tags = ``
 
-    for (const [pluginId, uniques] of Object.entries(pluginsStructure)) {
+    for (const pluginId of Object.keys(pluginsStructure)) {
         if (loadedPlugins[pluginId]?.codeLoader?.getCode().drawable === undefined) continue
-        for (const unique of uniques) {
-            tags += `${generateSvelteDrawablePluginTag(pluginId, unique)}`
-        }
+        tags += `${generateSvelteDrawablePluginTag(pluginId)}`
     }
     return tags
 }

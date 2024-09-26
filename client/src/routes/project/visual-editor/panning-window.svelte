@@ -1,7 +1,6 @@
 <!-- @format -->
 <script lang="ts">
     import {
-        DOUBLE_CLICK_BLOCK_DELAY,
         DRAWABLE_SHOWN_CONTEXT_KEY,
         IS_TRANSFORMING_CONTEXT_KEY,
         IS_ZOOMING_CONTEXT_KEY,
@@ -46,9 +45,6 @@
 
     let zoomingTimeout: any = null
 
-    let isDoubleClicking = false
-    let doubleClickTimeout: any = null
-
     let panzoom
 
     onMount(() => {
@@ -60,26 +56,13 @@
             initialZoom: initialZoom,
             beforeWheel: event => !event.ctrlKey,
             beforeMouseDown: event => !event.altKey,
-            zoomDoubleClickSpeed: 1,
-            onDoubleClick: () => {
-                isDoubleClicking = true
-
-                clearTimeout(doubleClickTimeout)
-                doubleClickTimeout = setTimeout(() => {
-                    isDoubleClicking = false
-                    isTransforming.update(x => x)
-                    isZooming.update(x => x)
-                }, DOUBLE_CLICK_BLOCK_DELAY)
-            },
         })
 
         let transformEndTimeout: any = null
         panzoom.on("transform", () => {
-            if (!isDoubleClicking) {
-                $isTransforming = true
-                clearTimeout(transformEndTimeout)
-                transformEndTimeout = setTimeout(updateAnchorPosition, WHEEL_UPDATE_DELAY)
-            }
+            $isTransforming = true
+            clearTimeout(transformEndTimeout)
+            transformEndTimeout = setTimeout(updateAnchorPosition, WHEEL_UPDATE_DELAY)
         })
 
         scrollableContainer.addEventListener(
@@ -97,13 +80,11 @@
         })
 
         panzoom.on("zoom", () => {
-            if (!isDoubleClicking) {
-                $isZooming = true
-                clearTimeout(zoomingTimeout)
-                zoomingTimeout = setTimeout(() => {
-                    $isZooming = false
-                }, ZOOM_UPDATE_DELAY)
-            }
+            $isZooming = true
+            clearTimeout(zoomingTimeout)
+            zoomingTimeout = setTimeout(() => {
+                $isZooming = false
+            }, ZOOM_UPDATE_DELAY)
         })
 
         updateAnchorPosition()
@@ -131,26 +112,30 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div use:resize={updateAnchorPosition} class="absolute inset-0 overflow-hidden">
     <EventInterceptor on:event={eventHandler}>
-        <div bind:this={scrollableContainer} class="absolute inset-0 overflow-visible pointer-events-auto">
-            <div bind:this={scrollableContent} class="absolute inset-0 pointer-events-none">
-                <div
-                    class="absolute"
-                    style="left:{displacement.x / initialZoom}px;top:{displacement.y / initialZoom}px;">
-                    <slot />
+        <div
+            on:dblclick|capture={event => event.stopImmediatePropagation()}
+            class="absolute inset-0 overflow-visible pointer-events-auto">
+            <div bind:this={scrollableContainer} class="absolute inset-0 overflow-visible pointer-events-auto">
+                <div bind:this={scrollableContent} class="absolute inset-0 pointer-events-none">
+                    <div
+                        class="absolute"
+                        style="left:{displacement.x / initialZoom}px;top:{displacement.y / initialZoom}px;">
+                        <slot />
+                    </div>
                 </div>
-            </div>
-            <div
-                bind:this={anchorContainer}
-                class="absolute pointer-events-none"
-                style="left:{displacement.x * $panzoomTransform.scale + $panzoomTransform.x}px;top:{displacement.y *
-                    $panzoomTransform.scale +
-                    $panzoomTransform.y}px">
                 <div
-                    class={cn("absolute flex justify-center items-center")}
-                    style="opacity:{$showDrawable
-                        ? 1
-                        : 0};width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
-                    <slot name="drawable" {anchorBox} />
+                    bind:this={anchorContainer}
+                    class="absolute pointer-events-none"
+                    style="left:{(displacement.x * $panzoomTransform.scale) / initialZoom +
+                        $panzoomTransform.x}px;top:{(displacement.y * $panzoomTransform.scale) / initialZoom +
+                        $panzoomTransform.y}px">
+                    <div
+                        class={cn("absolute flex justify-center items-center")}
+                        style="opacity:{$showDrawable
+                            ? 1
+                            : 0};width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
+                        <slot name="drawable" {anchorBox} />
+                    </div>
                 </div>
             </div>
         </div>

@@ -15,10 +15,15 @@ function onPointer({ name, event: eventData }) {
     let pointerStatusChanged = isPointerDown;
     if (["mousedown", "pointerdown", "touchstart"].includes(name)) isPointerDown = true
     if (["mouseup", "pointerup", "touchend", "touchcancel"].includes(name)) isPointerDown = false
+    let leaveEvents = ["mouseleave", "mouseout"]
     pointerStatusChanged = pointerStatusChanged != isPointerDown;
 
     let targets =
         eventData.pageX && eventData.pageY ? document.elementsFromPoint(eventData.pageX, eventData.pageY) ?? [] : []
+    if (leaveEvents.includes(eventData.type)) targets = []
+
+    targets = targets.filter(el => window.getComputedStyle(el).pointerEvents !== 'none');
+
     if (targets) updateHover(targets)
     if (targets && pointerStatusChanged) updateActive(targets);
 

@@ -1,12 +1,14 @@
 <script>
     import Matic from "./Matic"
-    
-    let {scaleFactor, scaledBoxes} = Matic;
+
+    let { scaledBoxes } = Matic;
 </script>
-{#each $scaledBoxes as {x,y,w}}
+{#each $scaledBoxes as {x,y,w, h}}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="knob" style="left:{x}px;top:{y}px;width:{w}px">
         <p>Desktop</p>
     </div>
+    <div class="outline" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px"></div>
 {/each}
 <style>
     .knob {
@@ -17,6 +19,7 @@
         border-radius: 6px;
         display: flex;
         align-items: center;
+        transition: 150ms background-color, 150ms outline;
     }
 
     .knob p{
@@ -26,5 +29,29 @@
         font-size: 12px;
         font-family: "Open Sans";
         padding: 0px 8px;
+        transition: 150ms color;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    :is(.knob.hover){
+        background-color: var(--tw-blue-100);
+    }
+
+    :is(.knob.hover) p{
+        color: var(--tw-blue-500);
+    }
+
+    :is(.knob.hover) + div{
+        opacity: 1;
+    }
+
+    .outline {
+        position: absolute;
+        outline: 1px solid var(--tw-blue-500);
+        outline-offset: -0.5px;
+        opacity: 0;
+        transition: 150ms opacity;
+        pointer-events: none;
     }
 </style>

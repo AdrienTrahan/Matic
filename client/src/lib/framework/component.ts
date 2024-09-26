@@ -78,10 +78,14 @@ export class Component {
 
     async loadDocument() {
         this.doc = this.connection!.get(COMPONENT_COLLECTION, this.id)
-        // this.doc.on("op", () => {})
+        this.doc.on("op", () => this.updateComponentData.bind(this))
         await new Promise<void>((resolve, reject) => this.doc!.subscribe(err => (err ? reject(err) : resolve())))
         const injectTree = injectUniqueId(this.doc.data)
         this.data.set(injectTree)
+    }
+
+    updateComponentData() {
+        this.data.set(this.doc?.data)
     }
 }
 
@@ -93,7 +97,7 @@ export class ParentComponent extends Component {
 
         const component = await new ParentComponent(id, loader).from(connection)
 
-        loader.registerComponent(component)
+        // loader.registerComponent(component)
 
         return component
     }

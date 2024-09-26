@@ -36,12 +36,5 @@
 </script>
 
 <div class="anchor" style="position:fixed;left:{origin.left}px;top:{origin.top}px;display:{display};">
-    {#each $boxes as { x, y, w, h }}
-        <div
-            class="sub-anchor"
-            style="position:absolute;left:{x * $scaleFactor}px;top:{y * $scaleFactor}px;width:{w *
-                $scaleFactor}px;height:{h * $scaleFactor}px;display:{display};">
-        </div>
-    {/each}
     <slot />
 </div>

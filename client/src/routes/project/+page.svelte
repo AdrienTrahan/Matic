@@ -17,6 +17,7 @@
     import PropertiesPanel from "./panels/properties-panel/properties-panel.svelte"
     import ToolPanel from "./panels/tool-panel/tool-panel.svelte"
     import VisualEditor from "./visual-editor/visual-editor.svelte"
+    import { resetConnections } from "$framework/editor-support/connector-redirect"
 
     export let data: {
         project: Project
@@ -43,6 +44,7 @@
     loadComponent($projectData.pages[Object.keys($projectData.pages)[0]])
 
     async function loadComponent(id: string) {
+        resetConnections()
         pluginLoader.clearLoadedPlugins()
         componentLoader.clearLoadedElements()
 

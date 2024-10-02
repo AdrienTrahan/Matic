@@ -101,7 +101,6 @@ function getComponentSlotsCode(slotLength: number): string {
                 export let instanceId
                 export let content = [];
                 $: component = Matic.getVariable(instanceId)
-                $: console.log($component, instanceId)
             </script>
             {#if $component.type == "file"}
                 <svelte:component this={Preloader[instanceId]}>

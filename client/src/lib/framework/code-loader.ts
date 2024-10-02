@@ -6,15 +6,7 @@ import {
     PUBLIC_MARKETPLACE_PLUGIN_URL,
     PUBLIC_PLUGIN_URL,
 } from "$env/static/public"
-import {
-    compileComponentList2SvelteList,
-    compileSvelteImports,
-    createBindingsObject,
-    createSvelteFile,
-    findSvelteImports,
-    flattenHMTL,
-    isElementInHouseFromId,
-} from "$shared/sharedb"
+import { isElementInHouseFromId } from "$shared/sharedb"
 import { get, writable, type Writable } from "svelte/store"
 import { Component } from "./component"
 import { safeFetch } from "./networking"

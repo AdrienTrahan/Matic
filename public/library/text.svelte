@@ -8,9 +8,8 @@
         if (!divElement) return
         hitboxes.set(divElement.getBoundingClientRect())
     })
-    
 </script>
-<h1>text</h1>
+<h1>asdasdaskjdhgajsdhg</h1>
 <style>
     h1{
         margin: 0px;

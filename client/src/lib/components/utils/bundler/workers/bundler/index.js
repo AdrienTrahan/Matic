@@ -428,6 +428,7 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 			],
 			output: {
 				inlineDynamicImports: true,
+				chunkFileNames: "[name].js"
 			},
 			onwarn(warning) {
 				all_warnings.push({

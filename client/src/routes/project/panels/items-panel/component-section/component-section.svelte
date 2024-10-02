@@ -1,33 +1,30 @@
 <!-- @format -->
 <script lang="ts">
-    import type { ParentComponent } from "$framework/component"
-    import { ComponentLoader } from "$framework/element-loader"
     import type { Project } from "$framework/project"
     import Button from "$lib/components/ui/button/button.svelte"
     import * as Dialog from "$lib/components/ui/dialog"
     import { Input } from "$lib/components/ui/input"
     import { Label } from "$lib/components/ui/label"
-    import { COMPONENT_LOADER_CONTEXT_KEY, PROJECT_CONTEXT_KEY } from "$lib/constants"
+    import { PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { COMPONENT_NAME_REGEX } from "$shared/validation"
     import { createEventDispatcher, getContext } from "svelte"
-    import type { Writable } from "svelte/store"
     const dispatch = createEventDispatcher()
 
     const project: Project = getContext(PROJECT_CONTEXT_KEY)
-    const componentLoader: ComponentLoader = getContext(COMPONENT_LOADER_CONTEXT_KEY)
-    const current: Writable<ParentComponent | undefined> = componentLoader.main
+    const editor = project.getEditor()
+    $: current = $editor.getPresentedComponent()
 
-    const { data: projectData } = project
+    const { library } = project
 
-    $: currentComponent = Object.keys($projectData.library).some(component => $current && component == $current?.id)
+    $: currentComponent = Object.keys($library).some(component => $current && component == $current?.id)
         ? $current
         : undefined
 
     let newComponentName: string = ""
 
     $: createNewComponentSubmitDisabled =
-        !newComponentName.match(COMPONENT_NAME_REGEX) || Object.values($projectData.library).includes(newComponentName)
-    $: components = Object.entries($projectData.library).sort((a: any, b: any) =>
+        !newComponentName.match(COMPONENT_NAME_REGEX) || Object.values($library).includes(newComponentName)
+    $: components = Object.entries($library).sort((a: any, b: any) =>
         a[1].toUpperCase() < b[1].toUpperCase() ? -1 : 1,
     )
 
@@ -50,9 +47,9 @@
     }
 </script>
 
-<div class="flex-1 flex flex-col">
-    <h1 class="text-lg font-bold mx-4 my-2">Components</h1>
-    <div class="flex-1">
+<div class="flex-1 flex flex-col min-h-0">
+    <h1 class="text-lg font-bold mx-4 my-2 min-h-0">Components</h1>
+    <div class="flex-1 overflow-auto min-h-0">
         {#each components as [id, name]}
             <div class="flex my-0">
                 <Button

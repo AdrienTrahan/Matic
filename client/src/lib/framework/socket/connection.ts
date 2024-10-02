@@ -8,7 +8,7 @@ import { Connection } from "sharedb/lib/client"
 
 export class Connector {
     static connections = {}
-    static async get(projectId: string) {
+    static async get(projectId: string): Promise<Connection> {
         if (Connector.connections[projectId]) return this.connections[projectId]
         const [connection, error] = await this.getConnection(projectId)
         if (error) throw error

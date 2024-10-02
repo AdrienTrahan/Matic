@@ -10,46 +10,24 @@ export function getDefaultComponentStructure(componentId: string) {
         children: [
             [
                 {
+                    id: "IH_1",
+                    name: "Frame",
+                    children: [[]],
+                },
+                {
                     id: "IH_0",
                     name: "Frame",
-                    children: [
-                        [
-                            {
-                                id: "IH_0",
-                                name: "Frame",
-                                children: [],
-                            },
-
-                            {
-                                id: "IH_0",
-                                name: "Frame",
-                                children: [
-                                    [
-                                        {
-                                            id: "IH_0",
-                                            name: "Frame",
-                                            children: [],
-                                        },
-                                    ],
-                                ],
-                            },
-                        ],
-                    ],
+                    children: [[]],
                 },
             ],
         ],
         plugins: ["BH_0", "BH_1"],
-        breakpoints: [500],
+        breakpoints: [],
         boxes: [
             {
                 x: 0,
                 y: 0,
                 w: 700,
-            },
-            {
-                x: 750,
-                y: 0,
-                w: 500,
             },
         ],
         slots: ["children"],

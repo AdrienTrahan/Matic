@@ -9,3 +9,5 @@ export function getDefaultProjectStructure(projectId: string, componentId: strin
         library: {},
     }
 }
+
+export const DEFAULT_PAGE_COMPONENT_NAME = "Page"

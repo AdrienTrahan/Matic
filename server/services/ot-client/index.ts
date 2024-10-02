@@ -11,7 +11,7 @@ import {
 import { UNEXPECTED_ERROR_OCCURED } from "../../error"
 import { OTBackendService } from "../ot-backend"
 import { getDefaultComponentStructure } from "./default-structure/component"
-import { getDefaultProjectStructure } from "./default-structure/project"
+import { DEFAULT_PAGE_COMPONENT_NAME, getDefaultProjectStructure } from "./default-structure/project"
 
 @singleton()
 export class OTFrontendService {
@@ -41,16 +41,16 @@ export class OTFrontendService {
 
     async createProject(projectId: string) {
         const documentId = getProjectDocumentId(projectId)
-        // Shouldn't exist anyways & useless check?
+        // Shouldn't exist anyways -> useless check?
         const projectExists = await this.projectExists(documentId)
         if (projectExists[0] || projectExists[1]) return projectExists
 
         const doc = this.getProjectDocument(documentId)!
 
-        const [componentId, err] = await this.createComponent(projectId, "0")
+        const [componentDocId, err] = await this.createComponent(projectId, "0")
         if (err) throw UNEXPECTED_ERROR_OCCURED
         return await new Promise<any>(resolve =>
-            doc.create(getDefaultProjectStructure(projectId, componentId), err =>
+            doc.create(getDefaultProjectStructure(projectId, componentDocId), err =>
                 err ? resolve([null, err]) : resolve([null, null])
             )
         )

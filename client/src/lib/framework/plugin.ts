@@ -6,12 +6,9 @@ import { isElementInHouseFromId, PLUGIN_COLLECTION } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
 import { writable, type Writable } from "svelte/store"
 import { PluginCodeLoader } from "./code-loader"
-import { type PluginLoader } from "./element-loader"
 import { injectUniqueId } from "./selector"
 
 export class Plugin {
-    elementLoader: PluginLoader
-
     data: Writable<any> = writable({})
 
     id: string
@@ -24,13 +21,12 @@ export class Plugin {
         return isElementInHouseFromId(this.id) ? Plugins[this.id] : this.doc?.data
     }
 
-    protected constructor(id: string, elementLoader: PluginLoader) {
-        this.elementLoader = elementLoader
+    protected constructor(id: string) {
         this.id = id
     }
 
-    static async init(id: string, loader: PluginLoader, connection: Connection) {
-        let plugin = new Plugin(id, loader)
+    static async init(id: string, connection: Connection) {
+        let plugin = new Plugin(id)
         return await plugin.from(connection)
     }
 

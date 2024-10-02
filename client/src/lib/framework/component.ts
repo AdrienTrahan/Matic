@@ -1,46 +1,32 @@
 /** @format */
 
-import { type File } from "$lib/components/utils/bundler"
 import { Components } from "$shared/packages"
-import {
-    COMPONENT_COLLECTION,
-    ComponentTypes,
-    generateEntrySvelteComponent,
-    isElementInHouseFromId,
-} from "$shared/sharedb"
+import { COMPONENT_COLLECTION, ComponentTypes, isElementInHouseFromId } from "$shared/sharedb"
 import type { Connection, Doc } from "sharedb/lib/client"
-import { writable, type Writable } from "svelte/store"
+import { derived, writable, type Writable } from "svelte/store"
 import { FileComponentCodeLoader, TreeComponentCodeLoader, type ComponentCodeLoader } from "./code-loader"
 import { injectUniqueId } from "./selector"
-import type { ComponentLoader, PluginLoader } from "./element-loader"
-import ContextInjector from "$shared/injected/context-injector.svelte?raw"
-import MaticConnector from "$shared/injected/connector.js?raw"
 
 export class Component {
-    componentLoader: ComponentLoader
-
-    data: Writable<any> = writable({})
-
     id: string
-    connection: Connection | undefined
-    doc: Doc | undefined
-
     componentType: ComponentTypes = ComponentTypes.TREE
+    connection: Connection | undefined
+    componentData: Writable<any> = writable({})
+    dependencies: Writable<string[]> = writable([])
 
+    doc: Doc | undefined
     codeLoader: ComponentCodeLoader | undefined
 
     get documentData() {
         return isElementInHouseFromId(this.id) ? Components[this.id] : this.doc?.data
     }
 
-    protected constructor(id: string, componentLoader: ComponentLoader) {
-        this.componentLoader = componentLoader
+    protected constructor(id: string) {
         this.id = id
     }
 
-    static async init(id: string, loader: ComponentLoader, connection: Connection) {
-        let component = new Component(id, loader)
-        component = loader.loadElement(component)
+    static async init(id: string, connection: Connection) {
+        let component = new Component(id)
         return await component.from(connection)
     }
 
@@ -73,71 +59,38 @@ export class Component {
     }
 
     loadPackage() {
-        this.data.set(Components[this.id])
+        this.componentData.set(Components[this.id])
     }
 
     async loadDocument() {
         this.doc = this.connection!.get(COMPONENT_COLLECTION, this.id)
         this.doc.on("op", () => this.updateComponentData.bind(this))
-        await new Promise<void>((resolve, reject) => this.doc!.subscribe(err => (err ? reject(err) : resolve())))
+        await new Promise<void>((resolve, reject) =>
+            this.doc!.subscribe(err => {
+                err ? reject(err) : resolve()
+                const injectTree = injectUniqueId(this.doc?.data)
+                this.componentData.set(injectTree)
+            })
+        )
         const injectTree = injectUniqueId(this.doc.data)
-        this.data.set(injectTree)
+        this.componentData.set(injectTree)
     }
 
     updateComponentData() {
-        this.data.set(this.doc?.data)
-    }
-}
-
-export class ParentComponent extends Component {
-    bundle: Writable<Array<File> | null> = writable(null)
-
-    static async init(id: string, loader: ComponentLoader, connection: Connection): Promise<ParentComponent> {
-        loader.clearLoadedElements()
-
-        const component = await new ParentComponent(id, loader).from(connection)
-
-        // loader.registerComponent(component)
-
-        return component
+        this.componentData.set(this.doc?.data)
     }
 
-    bundleCode(pluginLoader: PluginLoader) {
-        let files = [this, ...Object.values(this.componentLoader.loadedComponents)].map(
-            (component: Component): File => {
-                return {
-                    name: component.id,
-                    type: "svelte",
-                    source: component.codeLoader!.getCode(),
+    updateDependencies() {
+        const dependencies = new Set<string>([])
+        const searchForDependencies = (slots: any[][]) => {
+            for (const slot of slots) {
+                for (const child of slot) {
+                    dependencies.add(child.id)
+                    if (child.children) searchForDependencies(child.children)
                 }
             }
-        )
-
-        files = [
-            {
-                name: "App",
-                type: "svelte",
-                source: generateEntrySvelteComponent(this.id, true),
-            },
-            {
-                name: "Plugins",
-                type: "svelte",
-                source: pluginLoader.generatePreviewPlugins(),
-            },
-            {
-                name: "ContextInjector",
-                type: "svelte",
-                source: ContextInjector,
-            },
-            {
-                name: "Matic",
-                type: "js",
-                source: MaticConnector,
-            },
-            ...files,
-            ...pluginLoader.generatePreviewPluginsFile(),
-        ]
-
-        this.bundle.set(files)
+        }
+        searchForDependencies(this.documentData.children)
+        this.dependencies.set(Array.from(dependencies))
     }
 }

@@ -1,17 +1,17 @@
 <!-- @format -->
 <script lang="ts">
-    import type { ComponentLoader } from "$framework/element-loader"
+    import type { Project } from "$framework/project"
     import { hoveredElement } from "$framework/selector"
-    import { COMPONENT_LOADER_CONTEXT_KEY, FALLBACK_LAYER_NAME } from "$lib/constants"
+    import { FALLBACK_LAYER_NAME, PROJECT_CONTEXT_KEY } from "$lib/constants"
     import { cn } from "$lib/utils"
     import { getContext } from "svelte"
     import { TriangleRight } from "svelte-radix"
-    import type { Writable } from "svelte/store"
 
     export let layer
-    const componentLoader: ComponentLoader = getContext(COMPONENT_LOADER_CONTEXT_KEY)
-    const currentComponent = componentLoader.loadedComponents[layer.id]
-    const componentData: Writable<any> = currentComponent.data
+    const project: Project = getContext(PROJECT_CONTEXT_KEY)
+    const editor = project.getEditor()
+    $: currentComponent = $editor.getComponentWithId(layer.id)
+    $: componentData = currentComponent.componentData
 
     $: slots = layer.children.slice(0, $componentData.slots.length)
     let collapsed = false

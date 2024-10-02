@@ -1,8 +1,10 @@
 /** @format */
 
 export const PROJECT_CONTEXT_KEY = "project"
+
 export const COMPONENT_LOADER_CONTEXT_KEY = "component-loader"
 export const PLUGIN_LOADER_CONTEXT_KEY = "plugin-loader"
+
 export const SELECTOR_CONTEXT_KEY = "selector"
 export const PANZOOM_TRANSFORM_CONTEXT_KEY = "panzoomtransform"
 export const EVENT_INTERCEPTOR_CONTEXT_KEY = "interceptor"

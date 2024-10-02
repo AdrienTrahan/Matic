@@ -74,38 +74,11 @@ export class FileComponentCodeLoader extends ComponentCodeLoader {
 }
 
 export class TreeComponentCodeLoader extends ComponentCodeLoader {
-    imports: Writable<string[]> = writable([])
-    htmlComponents: Writable<any[]> = writable([])
-
     constructor(element: Component) {
         super(element)
-        this.imports.subscribe(this.updateCode.bind(this))
-        this.htmlComponents.subscribe(this.updateCode.bind(this))
     }
 
-    async load() {
-        await this.loadImports()
-        this.generateSvelteDOM()
-    }
-
-    async loadImports() {
-        this.imports.set(Array.from(findSvelteImports(this.element.doc!.data.children)))
-        // for (const componentId of get(this.imports)) {
-        //     await Component.init(componentId, (this.element as Component).componentLoader, this.element.connection!)
-        // }
-    }
-
-    generateSvelteDOM() {
-        this.htmlComponents.set(compileComponentList2SvelteList(this.element.doc?.data.children))
-    }
-
-    updateCode() {
-        const svelteImportsCode = compileSvelteImports(get(this.imports))
-        const svelteBindingsCode = createBindingsObject(this.element.doc?.data.children)
-        const svelteDomCode = flattenHMTL(get(this.htmlComponents))
-        const svelteFileCode = createSvelteFile(svelteImportsCode, svelteBindingsCode, svelteDomCode)
-        this.code.set(svelteFileCode)
-    }
+    async load() {}
 }
 
 export class PluginCodeLoader extends CodeLoader {

@@ -47,8 +47,10 @@ export default class ReplProxy {
         if (event.source !== this.iframe.contentWindow) return
 
         const { action, args } = event.data
+
         switch (action) {
             case "cmd_error":
+                console.error(event.data)
             case "cmd_ok":
                 return this.handle_command_message(event.data)
             case "fetch_progress":

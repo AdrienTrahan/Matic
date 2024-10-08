@@ -93,4 +93,8 @@ export class Component {
         searchForDependencies(this.documentData.children)
         this.dependencies.set(Array.from(dependencies))
     }
+
+    getPlugins() {
+        return this.documentData.plugins ?? []
+    }
 }

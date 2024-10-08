@@ -42,7 +42,7 @@ export class ComponentLoader {
     getDependencyPlugins() {
         const dependencyPlugins = new Set<string>()
         for (const component of Object.values(this.loadedComponents)) {
-            for (const plugin of component.documentData.plugins ?? []) {
+            for (const plugin of component.getPlugins()) {
                 dependencyPlugins.add(plugin)
             }
         }
@@ -69,5 +69,13 @@ export class PluginLoader {
     loadElement(plugin: Plugin) {
         if (this.loadedPlugins[plugin.id] === undefined) this.loadedPlugins[plugin.id] = plugin
         return this.loadedPlugins[plugin.id]
+    }
+
+    getPluginWithId(pluginId: string) {
+        return this.loadedPlugins[pluginId]
+    }
+
+    getAllLoadedPluginIds() {
+        return Object.values(this.loadedPlugins).map(({ id }) => id)
     }
 }

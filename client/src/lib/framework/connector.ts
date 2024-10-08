@@ -13,6 +13,7 @@ export default class Connector {
     })
     private ready
     private readyUnsubscriber?: Unsubscriber
+    isLoaded: Writable<boolean> = writable(false)
 
     private iframesBinded
     private iframesBindedUnsubscriber?: Unsubscriber
@@ -95,16 +96,22 @@ export default class Connector {
         await this.ready
 
         await this.addVariable("boxes", this.viewer.boxes)
-        for (const dependency of this.viewer.getEditor().getAllComponentsDependencies()) {
-            const componentDataWritable = this.viewer.getEditor().getComponentWithId(dependency).componentData
-            await this.addVariable(dependency, componentDataWritable)
+        for (const componentDependency of this.viewer.getEditor().getAllComponentsDependencies()) {
+            const componentDataWritable = this.viewer.getEditor().getComponentWithId(componentDependency).componentData
+            await this.addVariable(componentDependency, componentDataWritable)
+        }
+        for (const pluginDependency of this.viewer.getEditor().getAllPluginsDependencies()) {
+            const pluginDataWritable = this.viewer.getEditor().getPluginWithId(pluginDependency).documentData
+            await this.setVariable(pluginDependency, pluginDataWritable)
         }
         const presentedComponentId = get(this.viewer.getEditor().getPresentedComponent())?.id
         await this.addVariable("presentedComponent", writable(presentedComponentId))
         await this.broadcastCall("loaded", [])
+        this.isLoaded.set(true)
     }
 
     async cleanUpConnections() {
+        this.isLoaded.set(false)
         this.clearVariables()
 
         for (const unsubscriber of this.unsubscribers) {

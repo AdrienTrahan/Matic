@@ -1,13 +1,18 @@
 /** @format */
 
 import { extractNonce } from "./nonce"
+import { DEV } from "esm-env"
 
 export const INJECTED_SRCDOC_SYMBOL = `/*INJECTED_CODE*/`
+
+const WARNING_FILTER = !DEV ? `console.warn = () => {}` : ""
 
 const srcdoc: string = `<!DOCTYPE html>
 		<html>
 		<head>
 			<script nonce="${extractNonce()}">
+				${WARNING_FILTER}
+
 				${INJECTED_SRCDOC_SYMBOL}
 
 				(function () {

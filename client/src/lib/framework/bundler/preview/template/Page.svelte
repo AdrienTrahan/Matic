@@ -1,17 +1,18 @@
 <!-- @format -->
 <script>
-    // @ts-ignore
+    // @ts-nocheck
     import Matic from "./Matic"
     import { get } from "svelte/store"
-    // @ts-ignore
     import Component from "./Component.svelte"
+    import PluginInjector from "./PluginInjector.svelte"
 
-    let instanceId
+    let presentedComponent
     export function load() {
-        instanceId = get(Matic.getVariable("presentedComponent"))
+        let presentedId = get(Matic.getVariable("presentedComponent"))
+        presentedComponent = Matic.getVariable(presentedId)
     }
 </script>
 
-{#if instanceId}
-    <Component {instanceId} />
+{#if $presentedComponent != undefined}
+    <PluginInjector component={$presentedComponent} />
 {/if}

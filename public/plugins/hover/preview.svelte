@@ -1,10 +1,7 @@
 <script>
-    import Matic from "./Matic";
-    const matic = Matic();
-    export let componentId;
-    export let components
-
+    export let component;
+    console.log("BH0 LOADED")
 </script>
 <h1>
-    {text}
+    asd
 </h1>

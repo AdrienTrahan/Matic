@@ -1,22 +1,24 @@
 /** @format */
 
 import type { Component } from "$framework/component"
+import type { Plugin } from "$framework/plugin"
 import { INJECTED_SRCDOC_SYMBOL, srcdoc, type File } from "$lib/components/utils/bundler"
 import { renameElementId } from "$shared/sharedb"
+import { getPreloadElementsCode } from ".."
 import Matic from "../library/Matic.js?raw"
 import App from "./template/App.svelte?raw"
 import Page from "./template/Page.svelte?raw"
-import TreeTemplate from "./template/Tree.svelte?raw"
+import PluginInjector from "./template/PluginInjector.svelte?raw"
 
 export function getPreviewInjectedCode(index: number) {
     return srcdoc.replace(
         INJECTED_SRCDOC_SYMBOL,
         `
             Object.defineProperty(window, 'Matic', {
-                value: {
+                value: Object.freeze({
                     type: "preview",
                     index: ${index}
-                },
+                }),
                 writable: false,
                 configurable: false
             });
@@ -24,7 +26,7 @@ export function getPreviewInjectedCode(index: number) {
     )
 }
 
-export function getPreviewFiles(components: Component[]): File[] {
+export function getPreviewFiles(components: Component[], plugins: Plugin[]): File[] {
     const maxSlotLength = components.reduce((maxSlotCount, component) => {
         const slotCount = component?.documentData?.slots?.length ?? 0
         return slotCount > maxSlotCount ? slotCount : maxSlotCount
@@ -52,14 +54,17 @@ export function getPreviewFiles(components: Component[]): File[] {
             source: getComponentSlotsCode(maxSlotLength),
         },
         {
-            name: "Tree",
+            name: "PluginInjector",
             type: "svelte",
-            source: TreeTemplate,
+            source: PluginInjector,
         },
         {
             name: "Preloader",
             type: "js",
-            source: getPreloadComponentsCode(components.map(({ id }) => renameElementId(id ?? ""))),
+            source: getPreloadElementsCode([
+                ...components.map(({ id }) => renameElementId(id ?? "")),
+                ...plugins.map(({ id }) => renameElementId(id ?? "")),
+            ]),
         },
         ...components
             .map(component => [component.id, component.codeLoader?.getCode()])
@@ -68,15 +73,14 @@ export function getPreviewFiles(components: Component[]): File[] {
                 type: "svelte",
                 source: code ?? "",
             })),
+        ...plugins
+            .map(plugin => [plugin.id, plugin.codeLoader?.getCode().preview])
+            .map(([id, code]) => ({
+                name: renameElementId(id ?? ""),
+                type: "svelte",
+                source: code ?? "",
+            })),
     ]
-}
-
-function getPreloadComponentsCode(componentIds): string {
-    const imports = componentIds.map(componentId => `import ${componentId} from "./${componentId}.svelte";`).join("")
-    return `
-        ${imports}
-        export default {${componentIds.join(", ")}};
-    `
 }
 
 function getComponentSlotsCode(slotLength: number): string {
@@ -85,8 +89,8 @@ function getComponentSlotsCode(slotLength: number): string {
         .map(
             (_, i) => `
             <svelte:fragment slot="${i}">
-                {#each (content[${i}] ?? []) as child}
-                    <svelte:self instanceId={child.id} content={child.children} />
+                {#each (component.children[${i}] ?? []) as child}
+                    <PluginInjector component={child} />
                 {/each}
             </svelte:fragment>
         `
@@ -96,20 +100,21 @@ function getComponentSlotsCode(slotLength: number): string {
             <script>
                 import Matic from "./Matic"
                 import Preloader from "./Preloader"
-                import Tree from "./Tree.svelte"
+                import PluginInjector from "./PluginInjector.svelte"
 
-                export let instanceId
-                export let content = [];
-                $: component = Matic.getVariable(instanceId)
+                export let component;
+                let componentDeclaration = Matic.getVariable(component.id);
+                $: componentDeclaration = Matic.getVariable(component.id);
+
             </script>
-            {#if $component.type == "file"}
-                <svelte:component this={Preloader[instanceId]}>
+            {#if $componentDeclaration.type == "file"}
+                <svelte:component this={Preloader[component.id]}>
                     ${slotsCode}
                 </svelte:component>
-            {:else}
-                {#each $component.children as slot}
+            {:else if $componentDeclaration.type == "tree"}
+                {#each component.children as slot}
                     {#each slot as child}
-                        <svelte:self instanceId={child.id} content={child.children} />
+                        <PluginInjector component={child} />
                     {/each}
                 {/each}
             {/if}

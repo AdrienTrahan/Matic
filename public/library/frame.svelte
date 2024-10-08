@@ -13,6 +13,6 @@
 <div bind:this={divElement} style="background-color: chartreuse; width: 100px; height: 100px; top: 0px; left: 0px;">
     <slot name="0" />
 </div>
-<div bind:this={divElement} style="background-color: blue; width: 100px; height: 100px; top: 0px; left: 0px;">
+<div bind:this={divElement} style="background-color: blue;">
     <slot name="1" />
 </div>

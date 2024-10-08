@@ -23,6 +23,7 @@ export class Viewer {
     > = writable([])
 
     previewIframes: Writable<{ [key: number]: HTMLIFrameElement }> = writable({})
+    drawableIframe: Writable<HTMLIFrameElement | null> = writable(null)
 
     private presentedComponentDataUnsubscriber?: Unsubscriber
     private dependencyListenerUnsubscribers: { [componentId: string]: Unsubscriber } = {}

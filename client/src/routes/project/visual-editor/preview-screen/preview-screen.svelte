@@ -11,8 +11,8 @@
     const project: Project = getContext(PROJECT_CONTEXT_KEY)
     const editor = project.getEditor()
     const viewer: Writable<Viewer> = writable($editor.getViewer())
-
     $: viewer.set($editor.getViewer())
+
     const connector = derived([viewer], ([$viewer]) => $viewer.getConnector())
 
     const boxes: Writable<
@@ -44,8 +44,11 @@
     $: componentDependencies = $editor
         .getAllComponentsFileDependencies()
         .map(dependencyId => $editor.getComponentWithId(dependencyId))
+    $: pluginDependencies = $editor
+        .getAllPluginsDependencies()
+        .map(dependencyId => $editor.getPluginWithId(dependencyId))
 
-    $: previewFiles = getPreviewFiles(componentDependencies)
+    $: previewFiles = getPreviewFiles(componentDependencies, pluginDependencies)
     $: origin = { x: ($boxes[0]?.x ?? 0) + ($boxes[0]?.w ?? 0) / 2, y: ($boxes[0]?.y ?? 0) + ($boxes[0]?.h ?? 0) / 2 }
 
     onDestroy(() => {

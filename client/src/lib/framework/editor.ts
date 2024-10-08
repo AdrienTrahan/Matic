@@ -39,18 +39,22 @@ export class Editor {
     getComponentWithId(id: string) {
         return this.componentLoader.getComponentWithId(id)
     }
+    getPluginWithId(id: string) {
+        return this.pluginLoader.getPluginWithId(id)
+    }
 
     getAllComponentsDependencies(): string[] {
-        const dependencies = new Set<string>([])
-        for (const componentId of this.componentLoader.getAllLoadedComponentIds()) {
-            const component = this.componentLoader.getComponentWithId(componentId)
-            if (component.componentType !== ComponentTypes.TREE) continue
-            for (const dependency of this.componentLoader.getComponentDependencies(componentId)) {
-                dependencies.add(dependency)
-            }
-            dependencies.add(componentId)
-        }
-        return Array.from(dependencies)
+        // const dependencies = new Set<string>([])
+        // for (const componentId of this.componentLoader.getAllLoadedComponentIds()) {
+        //     const component = this.componentLoader.getComponentWithId(componentId)
+        //     if (component.componentType !== ComponentTypes.TREE) continue
+        //     for (const dependency of this.componentLoader.getComponentDependencies(componentId)) {
+        //         dependencies.add(dependency)
+        //     }
+        //     dependencies.add(componentId)
+        // }
+
+        return this.componentLoader.getAllLoadedComponentIds()
     }
 
     getAllComponentsTreeDependencies() {
@@ -89,5 +93,9 @@ export class Editor {
 
     getViewer() {
         return this.viewer
+    }
+
+    getAllPluginsDependencies() {
+        return this.pluginLoader.getAllLoadedPluginIds()
     }
 }

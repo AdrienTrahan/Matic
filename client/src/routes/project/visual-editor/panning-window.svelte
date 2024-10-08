@@ -14,7 +14,7 @@
     import { getContext, onMount, setContext, tick } from "svelte"
     import { resize } from "svelte-resize-observer-action"
     import { derived, writable, type Writable } from "svelte/store"
-    import EventInterceptor from "./drawing-screen/event-interceptor.svelte"
+    import EventInterceptor from "./drawing-screen3/event-interceptor.svelte"
 
     const panzoomTransform: Writable<{ x: number; y: number; scale: number }> =
         getContext(PANZOOM_TRANSFORM_CONTEXT_KEY)
@@ -96,7 +96,6 @@
 
         let { top, left } = anchorContainer.getBoundingClientRect()
         let { width, height } = scrollableContainer.getBoundingClientRect()
-        if ($showDrawable) $showDrawable = false
         await tick()
         await new Promise(resolve => requestAnimationFrame(resolve))
         anchorBox.update(obj => {
@@ -131,9 +130,7 @@
                         $panzoomTransform.y}px">
                     <div
                         class={cn("absolute flex justify-center items-center")}
-                        style="opacity:{$showDrawable
-                            ? 1
-                            : 0};width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
+                        style="width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
                         <slot name="drawable" {anchorBox} />
                     </div>
                 </div>

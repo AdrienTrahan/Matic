@@ -1,3 +1,4 @@
+// @ts-nocheck
 /// <reference lib="webworker" />
 
 import '../patch_window';

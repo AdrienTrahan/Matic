@@ -9,7 +9,11 @@
     let presentedComponent
     export function load() {
         let presentedId = get(Matic.getVariable("presentedComponent"))
+        if (presentedId === undefined) return
         presentedComponent = Matic.getVariable(presentedId)
+    }
+    export function getHeight(){
+        return document.documentElement.scrollHeight;
     }
 </script>
 

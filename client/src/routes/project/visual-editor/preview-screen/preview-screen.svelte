@@ -5,7 +5,7 @@
     import type { Viewer } from "$framework/viewer"
     import { Bundler } from "$lib/components/utils/bundler"
     import { MIN_PAGE_HEIGHT, PROJECT_CONTEXT_KEY } from "$lib/constants"
-    import { getContext, onDestroy, onMount, tick } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { Unsubscriber } from "svelte/motion"
     import { derived, writable, type Writable } from "svelte/store"
     const project: Project = getContext(PROJECT_CONTEXT_KEY)
@@ -64,12 +64,12 @@
         .fill(0)
         .map(() => $connector.handlers)}
     theme="light" />
-<div class="flex gap-x-8 relative">
+<div class="relative" style="left:{-origin?.x}px;top:{-origin?.y}px">
     {#each $boxes as box, index}
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div
             class="absolute bg-white overflow-hidden"
-            style="left:{(box.x ?? 0) - origin.x}px;top:{(box.y ?? 0) - origin.y}px;width:{box.w ??
+            style="left:{box.x ?? 0}px;top:{box.y ?? 0}px;width:{box.w ??
                 0}px;height:{Math.max(box.h ?? 0, MIN_PAGE_HEIGHT)}px;">
             <iframe
                 class="pointer-events-none select-none w-full h-full"

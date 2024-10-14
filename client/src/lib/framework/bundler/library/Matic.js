@@ -8,12 +8,14 @@ let page = new Promise(resolve => pageResolveFunction = resolve);
 
 // @ts-ignore
 const whoAmI = window.Matic;
+const isReady = writable(false);
 
 const topLevelHandler = {
     loaded: hasFinishedLoading,
     variable: (name, value) => setVariable(name, value, false),
     clearVariables: clearVariables,
-    triggerIsReady: triggerIsReady
+    triggerIsReady: triggerIsReady,
+    getHeight: async () => (await page).getHeight()
 }
 const messageHandlers = {
     topLevel: topLevelHandler
@@ -41,6 +43,7 @@ export default class Matic {
     static init = init;
     static setVariable = setVariable;
     static getVariable = getVariable;
+    static isReady = isReady
 }
 
 async function handleCall(data) {
@@ -87,7 +90,7 @@ async function updateVariable(name, value) {
 }
 
 function getVariable(name) {
-    return variables[name];
+    if (name) return variables[name];
 }
 
 function returnMessage(info, data) {
@@ -118,14 +121,16 @@ async function sendMessage(destination, data, destinationIndex) {
     return result;
 }
 
-function clearVariables() {
+async function clearVariables() {
+    isReady.set(false);
     Object.keys(variables).forEach(key => {
-        delete variables[key];
+        setVariable(key, undefined, false);
     });
 }
 
 async function hasFinishedLoading() {
     const loadedPage = await page;
+    isReady.set(true);
     loadedPage.load()
 }
 
@@ -140,4 +145,6 @@ function triggerIsReady() {
     }, "*");
 }
 
+
 triggerIsReady();
+

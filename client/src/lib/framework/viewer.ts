@@ -1,11 +1,9 @@
 /** @format */
 
+import type { Component } from "$framework/component"
 import type { Editor } from "$framework/editor"
 import { derived, get, writable, type Readable, type Unsubscriber, type Writable } from "svelte/store"
 import Connector from "./connector"
-import type { Component } from "$framework/component"
-import { TreeComponentCodeLoader } from "./code-loader"
-import { isElementInHouseFromId } from "$shared/sharedb"
 
 export class Viewer {
     private editor: Editor
@@ -21,6 +19,19 @@ export class Viewer {
             h: number
         }[]
     > = writable([])
+
+    panzoomTransform: Writable< {
+        x: number
+        y: number
+        scale: number
+    }> = writable({x: 0, y: 0, scale: 0})
+
+    anchorBox: Writable<{ width: number; height: number; top: number; left: number }> = writable({
+        width: 0,
+        height: 0,
+        top: 0,
+        left: 0,
+    })
 
     previewIframes: Writable<{ [key: number]: HTMLIFrameElement }> = writable({})
     drawableIframe: Writable<HTMLIFrameElement | null> = writable(null)
@@ -47,12 +58,13 @@ export class Viewer {
 
     resetPresentedComponent() {
         this.clearUnsubscribeToListeners()
+        this.connector.cleanUpConnections()
 
         const presentedComponent: Component | null = get(this.editor.getPresentedComponent())
         if (presentedComponent === null) return
         this.listenForBoxChange(presentedComponent)
         this.listenForDependencyUpdates()
-        this.connector.resetConnections()
+        this.connector.setupConnections()
     }
 
     listenForBoxChange(presentedComponent: Component) {

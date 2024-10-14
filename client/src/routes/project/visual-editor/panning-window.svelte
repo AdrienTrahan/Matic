@@ -5,6 +5,7 @@
         IS_TRANSFORMING_CONTEXT_KEY,
         IS_ZOOMING_CONTEXT_KEY,
         PANZOOM_TRANSFORM_CONTEXT_KEY,
+        PROJECT_CONTEXT_KEY,
         SCALE_FACTOR_CONTEXT_KEY,
         WHEEL_UPDATE_DELAY,
         ZOOM_UPDATE_DELAY,
@@ -13,12 +14,25 @@
     import Panzoom from "panzoom"
     import { getContext, onMount, setContext, tick } from "svelte"
     import { resize } from "svelte-resize-observer-action"
-    import { derived, writable, type Writable } from "svelte/store"
-    import EventInterceptor from "./drawing-screen3/event-interceptor.svelte"
+    import { derived, get, writable, type Writable } from "svelte/store"
+    import EventInterceptor from "./drawing-screen/event-interceptor.svelte"
+    import type { Project } from "$framework/project"
+
+    const project: Project = getContext(PROJECT_CONTEXT_KEY)
+    const editor = project.getEditor()
+    const viewer = derived([editor], ([$editor]) => $editor.getViewer())
+
 
     const panzoomTransform: Writable<{ x: number; y: number; scale: number }> =
         getContext(PANZOOM_TRANSFORM_CONTEXT_KEY)
+    $: {
+        $viewer.panzoomTransform.set($panzoomTransform)
+    }
     export let initialZoom: number
+    export let displacement;
+    let zoomingTimeout: any = null
+    let panzoom
+    let anchorBox = get($viewer.anchorBox)
 
     let scrollableContainer: HTMLDivElement
     let scrollableContent: HTMLDivElement
@@ -35,17 +49,6 @@
     setContext(IS_TRANSFORMING_CONTEXT_KEY, isTransforming)
     setContext(SCALE_FACTOR_CONTEXT_KEY, scaleFactor)
 
-    export let displacement
-    export const anchorBox: Writable<{ width: number; height: number; top: number; left: number }> = writable({
-        width: 10,
-        height: 10,
-        top: 0,
-        left: 0,
-    })
-
-    let zoomingTimeout: any = null
-
-    let panzoom
 
     onMount(() => {
         panzoom = Panzoom(scrollableContent, {
@@ -75,9 +78,7 @@
         )
 
         panzoomTransform.set(panzoom.getTransform())
-        panzoom.on("pan", () => {
-            panzoomTransform.set(panzoom.getTransform())
-        })
+        panzoom.on("pan", () => panzoomTransform.set(panzoom.getTransform()))
 
         panzoom.on("zoom", () => {
             $isZooming = true
@@ -98,13 +99,13 @@
         let { width, height } = scrollableContainer.getBoundingClientRect()
         await tick()
         await new Promise(resolve => requestAnimationFrame(resolve))
-        anchorBox.update(obj => {
-            obj.top = top
-            obj.width = width
-            obj.left = left
-            obj.height = height
-            return obj
-        })
+        anchorBox = {
+            top,
+            width,
+            left,
+            height
+        }
+        $viewer.anchorBox.update(_ => anchorBox);
     }
 </script>
 
@@ -118,20 +119,20 @@
                 <div bind:this={scrollableContent} class="absolute inset-0 pointer-events-none">
                     <div
                         class="absolute"
-                        style="left:{displacement.x / initialZoom}px;top:{displacement.y / initialZoom}px;">
+                        style="left:{$displacement.x / initialZoom}px;top:{$displacement.y / initialZoom}px;">
                         <slot />
                     </div>
                 </div>
                 <div
                     bind:this={anchorContainer}
                     class="absolute pointer-events-none"
-                    style="left:{(displacement.x * $panzoomTransform.scale) / initialZoom +
-                        $panzoomTransform.x}px;top:{(displacement.y * $panzoomTransform.scale) / initialZoom +
+                    style="left:{($displacement.x * $panzoomTransform.scale) / initialZoom +
+                        $panzoomTransform.x}px;top:{($displacement.y * $panzoomTransform.scale) / initialZoom +
                         $panzoomTransform.y}px">
                     <div
                         class={cn("absolute flex justify-center items-center")}
-                        style="width:{$anchorBox.width}px;height:{$anchorBox.height}px;top:{-$anchorBox.top}px;left:{-$anchorBox.left}px;">
-                        <slot name="drawable" {anchorBox} />
+                        style="width:{anchorBox.width}px;height:{anchorBox.height}px;top:{-anchorBox.top}px;left:{-anchorBox.left}px;">
+                        <slot name="drawable" />
                     </div>
                 </div>
             </div>

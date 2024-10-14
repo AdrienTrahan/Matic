@@ -34,11 +34,11 @@
 
     let loaded = false
     let editorSection: HTMLDivElement
-    let displacement = {
+    let viewRect = writable({
         x: 0,
         y: 0,
         width: 0,
-    }
+    })
 
     setContext(PROJECT_CONTEXT_KEY, project)
     setContext(PANZOOM_TRANSFORM_CONTEXT_KEY, writable({ x: 0, y: 0, scale: 1 }))
@@ -50,12 +50,12 @@
     }
 
     onMount(() => {
-        setDisplacement()
+        setViewRect()
         loaded = true
     })
 
-    function setDisplacement() {
-        displacement = editorSection.getBoundingClientRect()
+    function setViewRect() {
+        $viewRect = editorSection.getBoundingClientRect()
     }
 </script>
 
@@ -64,7 +64,7 @@
         {#key $currentComponent != null}
             {#key $editor}
                 {#if $currentComponent && loaded}
-                    <VisualEditor {displacement} />
+                    <VisualEditor {viewRect} />
                 {/if}
             {/key}
         {/key}
@@ -76,7 +76,7 @@
         <div class="pointer-events-auto min-h-0">
             <ItemsPanel on:switchSelection={({ detail: { id } }) => switchSelectedComponent(id)} />
         </div>
-        <div class="flex-1 pointer-events-none" use:resize={setDisplacement} bind:this={editorSection}></div>
+        <div class="flex-1 pointer-events-none" use:resize={setViewRect} bind:this={editorSection}></div>
         <div class="pointer-events-auto">
             <PropertiesPanel />
         </div>

@@ -23,7 +23,7 @@
     let newComponentName: string = ""
 
     $: createNewComponentSubmitDisabled =
-        !newComponentName.match(COMPONENT_NAME_REGEX) || Object.values($library).includes(newComponentName)
+        !newComponentName.match(COMPONENT_NAME_REGEX) || Object.values($library).map(name => name.toUpperCase()).includes(newComponentName.toUpperCase())
     $: components = Object.entries($library).sort((a: any, b: any) =>
         a[1].toUpperCase() < b[1].toUpperCase() ? -1 : 1,
     )
@@ -80,7 +80,7 @@
         <div class="grid py-4">
             <div class="grid grid-cols-4 items-center gap-4">
                 <Label for="name" class="text-right">Name</Label>
-                <Input id="name" placeholder="Component Name" bind:value={newComponentName} class="col-span-3" />
+                <Input id="name" placeholder="Component Name" bind:value={newComponentName} class="col-span-3" autocomplete="off" />
             </div>
             {#if newComponentErrorMessage}
                 <p class="text-red-500 text-xs mt-4 text-right">{newComponentErrorMessage}</p>

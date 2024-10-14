@@ -7,6 +7,7 @@ import { getPreloadElementsCode } from ".."
 import Matic from "../library/Matic?raw"
 import App from "./template/App.svelte?raw"
 import Page from "./template/Page.svelte?raw"
+import PositionalWrapper from "./template/PositionalWrapper.svelte?raw"
 
 export function getDrawableInjectedCode() {
     return srcdoc.replace(
@@ -25,6 +26,7 @@ export function getDrawableInjectedCode() {
 }
 
 export function getDrawableFiles(plugins: Plugin[]): File[] {
+    
     return [
         {
             name: "App",
@@ -42,9 +44,21 @@ export function getDrawableFiles(plugins: Plugin[]): File[] {
             source: Page,
         },
         {
+            name: "PositionalWrapper",
+            type: "svelte",
+            source: PositionalWrapper,
+        },
+        {
             name: "Preloader",
             type: "js",
             source: getPreloadElementsCode([...plugins.map(({ id }) => renameElementId(id ?? ""))]),
         },
+        ...plugins
+            .map(plugin => [plugin.id, plugin.codeLoader?.getCode().drawable])
+            .map(([id, code]) => ({
+                name: renameElementId(id ?? ""),
+                type: "svelte",
+                source: code ?? "",
+            })),
     ]
 }

@@ -7,7 +7,7 @@
     import { getContext, onDestroy, onMount } from "svelte"
     import { resize } from "svelte-resize-observer-action"
     import type { Unsubscriber } from "svelte/motion"
-    import { derived, get, writable } from "svelte/store"
+    import { derived, get, writable, type Writable } from "svelte/store"
     import DrawingScreen from "./drawing-screen/drawing-screen.svelte"
     import PanningWindow from "./panning-window.svelte"
     import PreviewScreen from "./preview-screen/preview-screen.svelte"
@@ -32,29 +32,32 @@
         if (typeof isLoadedUnsubscriber === "function") isLoadedUnsubscriber()
     })
 
-    export let displacement
-    const initialZoom = (INITIAL_ZOOM * displacement.width) / document.body.clientWidth
+    export let viewRect : Writable<any>;
+    const initialZoom = (INITIAL_ZOOM * $viewRect.width) / document.body.clientWidth
 
     let editorContainer: HTMLDivElement
     let previewSize = writable({ width: 0, height: 0 })
+
+    let displacement = derived(viewRect, $newViewRect => ({ x: $newViewRect.x + $newViewRect.width / 2, y: $newViewRect.y + $newViewRect.height / 2 }));
+
     onMount(() => {
-        updateDisplacement()
+        updatePreviewSize()
     })
-    async function updateDisplacement() {
+    async function updatePreviewSize() {
         if (editorContainer) previewSize.set(editorContainer.getBoundingClientRect())
     }
 </script>
 
 <div class={cn("transition-opacity inset-0 absolute", $isLoaded ? "opacity-100" : "opacity-0")}>
     <PanningWindow
-        displacement={{ x: displacement.x + displacement.width / 2, y: displacement.y + displacement.height / 2 }}
+        {displacement}
         {initialZoom}>
-        <div use:resize={updateDisplacement}>
+        <div use:resize={updatePreviewSize}>
             {#if $currentComponent}
                 <PreviewScreen />
             {/if}
         </div>
-        <svelte:fragment slot="drawable" let:anchorBox>
+        <svelte:fragment slot="drawable">
             <DrawingScreen />
         </svelte:fragment>
     </PanningWindow>
@@ -64,6 +67,6 @@
         "absolute flex justify-center items-center transition-opacity pointer-events-none",
         $isLoaded ? "opacity-0" : "opacity-100",
     )}
-    style="top:{displacement.y}px;left:{displacement.x}px;width:{displacement.width}px;height:{displacement.height}px;">
+    style="top:{$viewRect.y}px;left:{$viewRect.x}px;width:{$viewRect.width}px;height:{$viewRect.height}px;">
     <Spinner size="medium" />
 </div>

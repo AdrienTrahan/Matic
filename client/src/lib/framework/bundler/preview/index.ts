@@ -107,16 +107,18 @@ function getComponentSlotsCode(slotLength: number): string {
                 $: componentDeclaration = Matic.getVariable(component.id);
 
             </script>
-            {#if $componentDeclaration.type == "file"}
-                <svelte:component this={Preloader[component.id]}>
-                    ${slotsCode}
-                </svelte:component>
-            {:else if $componentDeclaration.type == "tree"}
-                {#each component.children as slot}
-                    {#each slot as child}
-                        <PluginInjector component={child} />
+            {#if $componentDeclaration !== undefined}
+                {#if $componentDeclaration.type == "file"}
+                    <svelte:component this={Preloader[component.id]}>
+                        ${slotsCode}
+                    </svelte:component>
+                {:else if $componentDeclaration.type == "tree"}
+                    {#each component.children as slot}
+                        {#each slot as child}
+                            <PluginInjector component={child} />
+                        {/each}
                     {/each}
-                {/each}
+                {/if}
             {/if}
         `
 }

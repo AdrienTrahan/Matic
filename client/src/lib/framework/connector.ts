@@ -10,6 +10,7 @@ export default class Connector {
 
     private readyStatus = writable({
         preview: [] as boolean[],
+        drawable: false as boolean
     })
     private ready
     private readyUnsubscriber?: Unsubscriber
@@ -23,7 +24,7 @@ export default class Connector {
         return: data => this.returnMessage(data),
         redirect: data => this.redirectMessage(data),
     }
-    iframes: Readable<{ preview: { [key: number]: HTMLIFrameElement } }>
+    iframes: Readable<{ preview: { [key: number]: HTMLIFrameElement }, drawable: HTMLIFrameElement | null}>
 
     private sentMessages: { [messageId: string]: [Promise<any>, any][] } = {}
     private mainHandlers: { [functionName: string]: (...args: any[]) => any } = {
@@ -35,9 +36,10 @@ export default class Connector {
 
     constructor(viewer: Viewer) {
         this.viewer = viewer
-        this.iframes = derived([this.viewer.previewIframes], ([$previewIframes]) => {
+        this.iframes = derived([this.viewer.previewIframes, this.viewer.drawableIframe], ([$previewIframes, $drawableIframe]) => {
             return {
                 preview: $previewIframes,
+                drawable: $drawableIframe
             }
         })
     }
@@ -53,18 +55,26 @@ export default class Connector {
                     return readyStatus
                 })
                 break
+            
+            case "drawable":
+                this.readyStatus.update(readyStatus => {
+                    readyStatus.drawable = true
+                    return readyStatus
+                })
+                break
         }
     }
 
-    async resetPreviewReadyStatus(windowCount: number = get(this.viewer.boxes).length) {
+    async resetReadyStatus(windowCount: number = get(this.viewer.boxes).length) {
         this.readyStatus.update(readyStatus => {
             readyStatus.preview = new Array(windowCount).fill(false)
+            readyStatus.drawable = false;
             return readyStatus
         })
         this.ready = new Promise<void>(resolve => {
             if (typeof this.readyUnsubscriber === "function") this.readyUnsubscriber()
             this.readyUnsubscriber = this.readyStatus.subscribe($readyStatus => {
-                if ($readyStatus.preview.every(val => val) && $readyStatus.preview.length > 0) {
+                if ($readyStatus.preview.every(val => val) && $readyStatus.preview.length > 0 && $readyStatus.drawable) {
                     if (typeof this.readyUnsubscriber === "function") this.readyUnsubscriber()
                     resolve()
                 }
@@ -78,7 +88,8 @@ export default class Connector {
             this.iframesBindedUnsubscriber = this.iframes.subscribe($iframes => {
                 if (
                     Object.values($iframes.preview).filter(iframe => iframe != null).length ===
-                    get(this.viewer.windowCount)
+                    get(this.viewer.windowCount) && 
+                    $iframes.drawable != null
                 ) {
                     if (typeof this.iframesBindedUnsubscriber === "function") this.iframesBindedUnsubscriber()
                     resolve()
@@ -88,7 +99,7 @@ export default class Connector {
         return this.iframesBinded
     }
 
-    async resetConnections() {
+    async setupConnections() {
         this.cleanUpConnections()
         await this.waitForIframes2Bind()
 
@@ -96,6 +107,9 @@ export default class Connector {
         await this.ready
 
         await this.addVariable("boxes", this.viewer.boxes)
+        await this.addVariable("transform", this.viewer.panzoomTransform)
+        await this.addVariable("anchor", this.viewer.anchorBox)
+
         for (const componentDependency of this.viewer.getEditor().getAllComponentsDependencies()) {
             const componentDataWritable = this.viewer.getEditor().getComponentWithId(componentDependency).componentData
             await this.addVariable(componentDependency, componentDataWritable)
@@ -106,6 +120,21 @@ export default class Connector {
         }
         const presentedComponentId = get(this.viewer.getEditor().getPresentedComponent())?.id
         await this.addVariable("presentedComponent", writable(presentedComponentId))
+
+        const heights = await this.sendCallMessage(
+            this.getRecipients("preview", "main"), {
+            messageId: messageId++,
+            data: {
+                action: "getHeight"
+            },
+        })
+        this.viewer.boxes.update($boxes => {
+            for (const i in heights){
+                $boxes[i].h = heights[i];
+            }
+            return $boxes;
+        })
+
         await this.broadcastCall("loaded", [])
         this.isLoaded.set(true)
     }
@@ -119,21 +148,25 @@ export default class Connector {
         }
         this.unsubscribers = []
 
-        this.resetPreviewReadyStatus()
+        this.resetReadyStatus()
     }
 
     getRecipients(destinationType: string, originType: string, index: number | "*" = "*") {
         if (originType == destinationType) return []
         const mainRecipient = originType == "main" ? [] : [this]
-        if (destinationType == "*") return [...this.getRecipients("preview", originType), ...mainRecipient]
+        if (destinationType == "*") return [...this.getRecipients("preview", originType), ...this.getRecipients("drawable", originType), ...mainRecipient]
         switch (destinationType) {
             case "preview":
                 if (index == "*") return Object.values(get(this.iframes)?.preview).filter(iframe => iframe != null)
                 if (get(this.iframes)?.preview[index]) return [get(this.iframes)?.preview[index]]
                 break
+            case "drawable":
+                if (get(this.iframes).drawable) return [get(this.iframes).drawable]
+                break
             case "main":
                 return [this]
         }
+        return []
     }
 
     async sendCallMessage(recipients: (HTMLIFrameElement | Connector)[], data: any) {
@@ -232,7 +265,6 @@ export default class Connector {
 
     async broadcastCall(functionName, args: any[] = []) {
         const allRecipients = this.getRecipients("*", "main")
-
         await this.sendCallMessage(allRecipients, {
             messageId: messageId++,
             data: {

@@ -2,5 +2,5 @@
     export let component;
 </script>
 <h1>
-    asd
+    Plugin injected text
 </h1>

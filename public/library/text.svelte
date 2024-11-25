@@ -9,9 +9,10 @@
         hitboxes.set(divElement.getBoundingClientRect())
     })
 </script>
-<h1>asdasdaskjdhgajsdhg</h1>
+<h1>Some text</h1>
 <style>
     h1{
         margin: 0px;
+        font-family: sans-serif;
     }
 </style>

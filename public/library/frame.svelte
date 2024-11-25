@@ -10,7 +10,8 @@
     })
     
 </script>
-<div bind:this={divElement} style="background-color: chartreuse; width: 100px; height: 100px; top: 0px; left: 0px;">
+<div bind:this={divElement} style="background-color: red; width: 100px; height: 100px; top: 0px; left: 0px; color: white;">
+    this is a frame component
     <slot name="0" />
 </div>
 <div bind:this={divElement} style="background-color: blue;">
